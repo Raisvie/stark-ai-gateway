@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stark AI Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+/* Layout concept: navy header band with a quiet gold signal line; ivory workspace; serif for statements, sans for data and controls. */
+:root{
+  --font-display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --font-body:"Albert Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --bg:#FAFAF7; --surface:#FFFFFF; --ink:#1B2B4C; --muted:#5C6A84; --line:#E5E3DA;
+  --gold:#C19A4F; --goldink:#8A6B28; --goldsoft:#F6F0E2; --signal:#D8B573;
+  --band:#1B2B4C; --bandink:#F5F2EA; --bandmuted:#9FACC6; --bandline:rgba(255,255,255,.14);
+  --crit:#A8434B; --critsoft:#F7E8E9; --ok:#2F7D5B; --oksoft:#E4F2EB; --mask:#4B5E8E; --masksoft:#E7EBF5;
+  --warn:#8A6B28; --warnsoft:#F6F0E2; --mon:#5C6A84; --monsoft:#ECEEF3;
+  --code-bg:#14203B; --code-ink:#DDE3F0;
+  --shadow:0 1px 2px rgba(27,43,76,.05),0 10px 28px rgba(27,43,76,.07);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1730; --surface:#16223F; --ink:#F1EEE6; --muted:#9FACC6; --line:#2A3858;
+  --gold:#D8B573; --goldink:#D8B573; --goldsoft:#2A2519; --signal:#D8B573;
+  --band:#0A1124; --bandink:#F5F2EA; --bandmuted:#9FACC6; --bandline:rgba(255,255,255,.12);
+  --crit:#E69AA1; --critsoft:#3A2029; --ok:#78D0A6; --oksoft:#173329; --mask:#A5B6EA; --masksoft:#222E50;
+  --warn:#D8B573; --warnsoft:#2A2519; --mon:#9FACC6; --monsoft:#1F2B49;
+  --code-bg:#0A1124; --code-ink:#DDE3F0;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.25);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1730; --surface:#16223F; --ink:#F1EEE6; --muted:#9FACC6; --line:#2A3858;
+  --gold:#D8B573; --goldink:#D8B573; --goldsoft:#2A2519; --signal:#D8B573;
+  --band:#0A1124; --bandink:#F5F2EA; --bandmuted:#9FACC6; --bandline:rgba(255,255,255,.12);
+  --crit:#E69AA1; --critsoft:#3A2029; --ok:#78D0A6; --oksoft:#173329; --mask:#A5B6EA; --masksoft:#222E50;
+  --warn:#D8B573; --warnsoft:#2A2519; --mon:#9FACC6; --monsoft:#1F2B49;
+  --code-bg:#0A1124; --code-ink:#DDE3F0;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.25);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--gold) 55%,transparent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+.serif{font-family:var(--font-display)}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--goldink)}
+.muted{color:var(--muted)}
+
+/* header */
+.top{background:var(--band);color:var(--bandink);border-bottom:3px solid var(--gold);padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand svg{flex:none}
+.brand b{display:block;font-family:var(--font-display);font-size:22px;letter-spacing:.2em;line-height:1.1}
+.brand span{display:block;font-size:11px;letter-spacing:.24em;color:var(--bandmuted);margin-top:2px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.ctl{display:flex;align-items:center;gap:10px}
+.ctl label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bandmuted);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--bandline);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--bandmuted);padding:7px 14px;font-size:13px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--signal);color:#1B2B4C}
+.badge-proto{font-size:12px;color:var(--bandmuted);border:1px solid var(--bandline);border-radius:999px;padding:5px 12px;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:transparent;padding:15px 16px;font-weight:600;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.modebar{display:none;background:var(--warnsoft);border-bottom:1px solid var(--line);color:var(--warn);padding:9px 24px;font-size:14px;font-weight:600}
+.modebar.on{display:block}
+
+main{width:min(1280px,100%);margin-inline:auto;padding:28px 24px 64px}
+.panel[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow)}
+.pagehead{margin-bottom:24px;display:grid;gap:8px}
+.pagehead h1{font-family:var(--font-display);font-size:clamp(28px,3.6vw,42px);line-height:1.1;letter-spacing:-.01em}
+.pagehead p{color:var(--muted);max-width:760px;font-size:17px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.8fr);gap:20px;margin-bottom:20px}
+.hero-copy{background:var(--band);color:var(--bandink);border-radius:6px;padding:clamp(24px,3.5vw,40px);display:grid;gap:12px;align-content:center}
+.hero-copy .eyebrow{color:var(--signal)}
+.hero-copy h1{font-family:var(--font-display);font-size:clamp(28px,3.8vw,46px);line-height:1.08;letter-spacing:-.01em}
+.hero-copy h1 em{font-style:normal;color:var(--signal)}
+.hero-copy p{color:#C9D2E4;font-size:17px;max-width:640px}
+.goal{background:var(--goldsoft);border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:6px;padding:28px;display:grid;align-content:center;gap:6px}
+.goal .big{font-family:var(--font-display);font-size:clamp(46px,6vw,72px);font-weight:700;line-height:.95;color:var(--goldink)}
+.goal b{font-size:17px}
+.goal span{font-size:14px;color:var(--muted)}
+
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.metric{padding:18px 20px}
+.metric .l{font-size:13px;color:var(--muted)}
+.metric .v{font-family:var(--font-display);font-size:34px;font-weight:700;line-height:1.2;margin-top:2px}
+.metric .d{font-size:13px;color:var(--muted);margin-top:2px}
+
+.workspace{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start}
+.card-head{padding:22px 24px 8px}
+.card-head h2{font-family:var(--font-display);font-size:24px}
+.card-head p{color:var(--muted);font-size:15px;margin-top:2px}
+.card-body{padding:12px 24px 26px}
+.scenario{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;background:var(--goldsoft);border-radius:6px;margin-bottom:18px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.field{display:grid;gap:6px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:13px;font-weight:700}
+select,input,textarea{width:100%;border:1px solid color-mix(in srgb,var(--muted) 45%,var(--line));border-radius:4px;background:var(--surface);padding:10px 12px;min-width:0}
+textarea{min-height:150px;resize:vertical}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint.err{color:var(--crit);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.btn{min-height:42px;padding:9px 18px;border-radius:4px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14.5px}
+.btn:hover{background:var(--goldsoft)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover{background:color-mix(in srgb,var(--ink) 88%,var(--gold))}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1B2B4C}
+.btn.danger{background:var(--crit);border-color:var(--crit);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn[disabled]{opacity:.55;cursor:default}
+
+/* decision */
+.decision{position:sticky;top:12px;overflow:hidden}
+.d-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;background:var(--band);color:var(--bandink)}
+.d-top h2{font-family:var(--font-display);font-size:22px}
+.d-top p{font-size:14px;color:var(--bandmuted);margin-top:2px}
+.status{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:26px;font-weight:700;background:var(--signal);color:#1B2B4C}
+[data-tone="crit"] .status{background:var(--crit);color:#fff}
+[data-tone="ok"] .status{background:var(--ok);color:#fff}
+[data-tone="mask"] .status{background:var(--mask);color:#fff}
+[data-tone="warn"] .status{background:var(--signal);color:#1B2B4C}
+[data-tone="mon"] .status{background:var(--mon);color:#fff}
+.d-body{padding:22px 24px 26px}
+.empty{padding:30px 12px;text-align:center;color:var(--muted);display:grid;gap:6px;justify-items:center}
+.empty svg{margin-bottom:8px}
+.empty h3{font-family:var(--font-display);font-size:22px;color:var(--ink)}
+.result[hidden],.empty[hidden]{display:none}
+.outcome{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.o-title{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.1}
+[data-tone="crit"] .o-title{color:var(--crit)}
+[data-tone="ok"] .o-title{color:var(--ok)}
+[data-tone="mask"] .o-title{color:var(--mask)}
+[data-tone="warn"] .o-title{color:var(--warn)}
+[data-tone="mon"] .o-title{color:var(--mon)}
+.o-sub{color:var(--muted);font-size:14.5px;margin-top:4px}
+.pill{display:inline-flex;align-items:center;min-height:26px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap;background:var(--monsoft);color:var(--ink)}
+.pill.crit{background:var(--critsoft);color:var(--crit)}
+.pill.ok{background:var(--oksoft);color:var(--ok)}
+.pill.mask{background:var(--masksoft);color:var(--mask)}
+.pill.warn{background:var(--warnsoft);color:var(--warn)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}
+.tag{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:3px;background:var(--goldsoft);color:var(--goldink)}
+.conf{font-size:12.5px;color:var(--muted)}
+.block{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.block h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700}
+.block p{font-size:15px}
+.payload{max-height:170px;overflow:auto;padding:14px;border-radius:4px;background:var(--code-bg);color:var(--code-ink);font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.notify{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.on{background:var(--goldsoft);border-color:color-mix(in srgb,var(--gold) 50%,var(--line));color:var(--goldink);font-weight:600}
+.edu{margin-top:16px;padding:14px 16px;border-left:4px solid var(--gold);background:var(--goldsoft);border-radius:0 4px 4px 0;font-size:15px}
+.edu b{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--goldink);margin-bottom:4px}
+.steps{margin:0;padding-left:20px;font-size:14.5px;color:var(--muted)}
+.res-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+
+/* insights */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.kpi{padding:16px 18px}
+.kpi .l{font-size:12.5px;color:var(--muted);min-height:2.6em}
+.kpi .v{font-family:var(--font-display);font-size:32px;font-weight:700;line-height:1.15}
+.kpi .d{font-size:12.5px;color:var(--muted)}
+.kpi .d.good{color:var(--ok);font-weight:600}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;margin-bottom:20px}
+.grid2.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sect{padding:22px 24px}
+.sect h2{font-family:var(--font-display);font-size:22px}
+.sect .q{font-size:13px;color:var(--goldink);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sect .sub{font-size:14px;color:var(--muted);margin:4px 0 16px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+.heat th,.heat td{padding:8px 6px;text-align:center;font-size:13px}
+.heat th{font-weight:600;color:var(--muted);line-height:1.2;vertical-align:bottom}
+.heat th:first-child,.heat td:first-child{text-align:left;font-weight:600;color:var(--ink);white-space:nowrap;padding-left:0}
+.heat td.c{background:color-mix(in srgb,var(--gold) calc(var(--i)*88%),var(--surface));font-weight:600;border:2px solid var(--surface);border-radius:3px;color:var(--ink);font-variant-numeric:tabular-nums}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) 44px;gap:12px;align-items:center;font-size:14px}
+.bar .t{min-width:0;overflow-wrap:anywhere}
+.bar .tr{height:12px;background:var(--goldsoft);border-radius:2px;overflow:hidden}
+.bar .fl{height:100%;background:var(--gold)}
+.bar.pub .fl{background:var(--ink)}
+.bar .n{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+svg text{font-family:var(--font-body)}
+.chart svg{display:block;width:100%;height:auto}
+.wk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end;height:190px;border-bottom:2px solid var(--ink);padding:0 8px}
+.wk div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:6px}
+.wk .c{width:100%;background:var(--ink);border-radius:2px 2px 0 0}
+.wk .last .c{background:var(--gold)}
+.wk b{font-family:var(--font-display);font-size:22px}
+.wkl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:6px 8px 0;font-size:13px;color:var(--muted);text-align:center}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.col h3{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between}
+.col .list{display:grid;gap:10px;align-content:start;min-height:80px;padding:10px;background:var(--bg);border-radius:4px;border:1px dashed var(--line)}
+.inc{padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:4px;background:var(--surface);font-size:13.5px;display:grid;gap:6px}
+.inc.crit{border-left-color:var(--crit)}
+.inc .h{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.inc .m{color:var(--muted);font-size:12.5px}
+.inc .pb{font-size:12.5px;color:var(--ink)}
+.inc button{justify-self:start;border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:4px 10px;font-size:12.5px;font-weight:600}
+.inc button:hover{background:var(--goldsoft)}
+.priv{margin-top:16px;padding:14px 18px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:14px;color:var(--muted)}
+.priv b{color:var(--ink)}
+
+/* architecture */
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:34px;margin-top:8px}
+.node{padding:22px 20px;min-height:200px;position:relative}
+.node:not(:last-child)::after{content:"→";position:absolute;right:-28px;top:50%;transform:translateY(-50%);font-size:26px;color:var(--gold);font-weight:700}
+.node.d{background:var(--band);color:var(--bandink);border-color:var(--band)}
+.node h3{font-family:var(--font-display);font-size:20px;margin:10px 0 8px;line-height:1.2}
+.node p{font-size:14.5px;color:var(--muted)}
+.node.d p{color:var(--bandmuted)}
+.step{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--goldsoft);color:var(--goldink);font-weight:700;font-size:14px}
+.node.d .step{background:var(--signal);color:#1B2B4C}
+.rails{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
+.rail{padding:20px 22px;border-top:3px solid var(--gold)}
+.rail h3{font-size:17px;margin-bottom:6px}
+.rail p{font-size:14.5px;color:var(--muted)}
+.road{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:14px}
+.rd{padding:20px 22px}
+.rd .n{font-family:var(--font-display);font-size:40px;font-weight:700;color:var(--gold);line-height:1}
+.rd h3{font-family:var(--font-display);font-size:19px;margin:8px 0 6px}
+.rd p{font-size:14.5px;color:var(--muted)}
+.h2s{font-family:var(--font-display);font-size:26px;margin:34px 0 4px}
+
+/* audit */
+.toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-bottom:18px}
+.toolbar .g{display:flex;flex-wrap:wrap;gap:8px}
+.sum{display:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.sum.on{display:grid}
+.sbox{padding:16px 18px;background:var(--band);color:var(--bandink);border-radius:6px}
+.sbox b{display:block;font-family:var(--font-display);font-size:30px;line-height:1.15}
+.sbox span{font-size:13px;color:var(--bandmuted)}
+.sbox.warn{background:var(--warnsoft);color:var(--ink);border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line))}
+.sbox.warn span{color:var(--muted)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-bottom:22px}
+.tw table{min-width:720px}
+.tw th{background:var(--band);color:var(--bandink);text-align:left;padding:12px 14px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.tw td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+.tw tr:last-child td{border-bottom:0}
+.act{font-weight:700;white-space:nowrap}
+.act.crit{color:var(--crit)}.act.ok{color:var(--ok)}.act.mask{color:var(--mask)}.act.warn{color:var(--warn)}
+.st-ok{color:var(--ok);font-weight:700}.st-safe{color:var(--warn);font-weight:700}.st-exp{color:var(--crit);font-weight:700}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rule{padding:22px 24px;border-left:5px solid var(--gold)}
+.rule.crit{border-left-color:var(--crit)}.rule.mask{border-left-color:var(--mask)}.rule.ok{border-left-color:var(--ok)}
+.rule h3{font-family:var(--font-display);font-size:20px;margin-bottom:4px}
+.rule p{color:var(--muted);font-size:14.5px;margin-bottom:12px}
+.rule code{display:block;padding:10px 12px;border-radius:4px;background:var(--bg);border:1px solid var(--line);font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;padding:18px 24px;background:var(--band);color:var(--bandmuted);font-size:13px}
+
+@media (max-width:1040px){
+  .workspace,.grid2,.grid2.even,.hero{grid-template-columns:minmax(0,1fr)}
+  .decision{position:static}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .flow{grid-template-columns:minmax(0,1fr);gap:30px}
+  .node:not(:last-child)::after{content:"↓";right:50%;top:auto;bottom:-30px;transform:translateX(50%)}
+  .rails,.road{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sum{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:720px){
+  .top,.tabs,.modebar,footer{padding-left:16px;padding-right:16px}
+  main{padding:20px 16px 48px}
+  .metrics,.kpis,.rules,.rails,.road,.board,.form,.scenario{grid-template-columns:minmax(0,1fr)}
+  .field.full{grid-column:auto}
+  .bar{grid-template-columns:minmax(0,1fr) 40px}
+  .bar .tr{grid-column:1/-1;order:3}
+  .card-body,.card-head,.sect{padding-left:18px;padding-right:18px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="brand">
+    <svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 2 31 7v11c0 9-6 15-14 18C9 33 3 27 3 18V7z" fill="none" stroke="var(--signal)" stroke-width="2.2"/><path d="m10.5 18.5 5 5 8.5-10" fill="none" stroke="var(--signal)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>STARK</b><span>AI GATEWAY</span></div>
+  </div>
+  <div class="controls">
+    <div class="ctl"><label id="lbl-mode">Modo</label>
+      <div class="seg" role="group" aria-labelledby="lbl-mode">
+        <button id="mode-monitor" aria-pressed="false">Monitor</button>
+        <button id="mode-enforce" aria-pressed="true">Proteção</button>
+      </div></div>
+    <div class="ctl"><label id="lbl-role">Perfil</label>
+      <div class="seg" role="group" aria-labelledby="lbl-role">
+        <button id="role-lead" aria-pressed="true">Liderança</button>
+        <button id="role-sec" aria-pressed="false">Segurança</button>
+      </div></div>
+    <span class="badge-proto">Protótipo V2 · Dados fictícios</span>
+  </div>
+</header>
+<div class="modebar" id="modebar" role="status">Modo monitor ativo: as decisões são registradas e sinalizadas, mas nenhum envio é interrompido. Use para medir o risco real antes de bloquear.</div>
+<nav class="tabs" role="tablist" aria-label="Seções">
+  <button class="tab" role="tab" aria-selected="true" data-tab="simulator">Simulador</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="insights">Insights</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="architecture">Arquitetura</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="audit">Auditoria e validação</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="rules">Matriz de regras</button>
+</nav>
+
+<main>
+<!-- SIMULADOR -->
+<section id="simulator" class="panel">
+  <div class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Prevenção antes da exposição</div>
+      <h1>Uma vacina operacional para o <em>uso seguro de IA</em></h1>
+      <p>O gateway analisa identidade, contexto e conteúdo antes do envio, aplica uma política determinística e orienta o colaborador na hora da decisão.</p>
+    </div>
+    <div class="goal">
+      <div class="big">0%</div>
+      <b>Meta de exposição crítica</b>
+      <span>Medida nas baterias base e adversarial, na aba Auditoria e validação.</span>
+    </div>
+  </div>
+  <div class="metrics" aria-live="polite">
+    <div class="card metric"><div class="l">Tentativas críticas bloqueadas</div><div class="v num" id="m-rate">—</div><div class="d" id="m-rate-d">Nenhuma tentativa analisada</div></div>
+    <div class="card metric"><div class="l">Exposições críticas liberadas</div><div class="v num" id="m-exp">0%</div><div class="d" id="m-exp-d">Meta: manter em 0%</div></div>
+    <div class="card metric"><div class="l">Decisões registradas</div><div class="v num" id="m-ev">0</div><div class="d">Trilha de auditoria desta sessão</div></div>
+  </div>
+  <div class="workspace">
+    <section class="card" aria-labelledby="t-analise">
+      <div class="card-head"><h2 id="t-analise">Simular tentativa de uso</h2><p>Escolha um caso da base ou monte um cenário próprio.</p></div>
+      <div class="card-body">
+        <div class="scenario">
+          <select id="scenario" aria-label="Caso de validação"><option value="">Cenário personalizado</option></select>
+          <button class="btn primary" id="load-scenario">Carregar caso</button>
+        </div>
+        <div class="form">
+          <div class="field full"><label for="user">Usuário</label><select id="user"></select></div>
+          <div class="field"><label for="area">Área de atuação</label><select id="area"></select></div>
+          <div class="field"><label for="role">Cargo</label><input id="role" value="Analista"></div>
+          <div class="field"><label for="hierarchy">Nível hierárquico</label>
+            <select id="hierarchy"><option>Operacional</option><option selected>Analista</option><option>Coordenação</option><option>Gerência</option><option>Diretoria</option></select></div>
+          <div class="field"><label for="manager">Gestor responsável</label><input id="manager" value="Gestor da área"></div>
+          <div class="field"><label for="tool">Ferramenta de IA</label><select id="tool"></select></div>
+          <div class="field"><label for="purpose">Finalidade declarada</label><select id="purpose"></select></div>
+          <div class="field full"><label for="content">Conteúdo ou descrição do arquivo</label>
+            <textarea id="content" placeholder="Use somente informações fictícias. Ex.: Proposta comercial confidencial para o Cliente Exemplo, desconto especial de 18%."></textarea>
+            <div class="hint" id="content-hint">O protótipo roda no navegador e não envia o conteúdo para serviços externos.</div></div>
+        </div>
+        <div class="actions"><button class="btn primary" id="analyze">Analisar antes do envio</button><button class="btn" id="clear-form">Limpar conteúdo</button></div>
+      </div>
+    </section>
+
+    <aside class="card decision" id="decision" data-tone="warn" aria-labelledby="t-dec">
+      <div class="d-top"><div><h2 id="t-dec">Decisão preventiva</h2><p id="d-sub">Conteúdo ainda não analisado.</p></div><div class="status" id="status" aria-hidden="true">✓</div></div>
+      <div class="d-body" aria-live="polite">
+        <div class="empty" id="empty">
+          <svg width="52" height="58" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 2 31 7v11c0 9-6 15-14 18C9 33 3 27 3 18V7z" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="m10.5 18.5 5 5 8.5-10" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>Pronto para proteger</h3><p>O gateway decide antes de qualquer conexão com a ferramenta de IA. Carregue um caso e clique em analisar.</p>
+        </div>
+        <div class="result" id="result" hidden>
+          <div class="outcome"><div><div class="o-title" id="o-title"></div><div class="o-sub" id="o-sub"></div></div><span class="pill" id="o-risk"></span></div>
+          <div class="tags" id="tags"></div><div class="conf" id="conf"></div>
+          <div class="block"><h3>Regra acionada</h3><p id="rule-text"></p></div>
+          <div class="block"><h3 id="payload-title">Destino do conteúdo</h3><div class="payload" id="payload"></div></div>
+          <div class="block"><h3>Quem foi avisado</h3><div class="notify" id="notify"></div><p class="hint" style="margin-top:8px">O gestor só é avisado em caso grave, aprovação pendente ou reincidência.</p></div>
+          <div class="block" id="next-block" hidden><h3>Próximos passos do incidente</h3><ol class="steps" id="next-steps"></ol></div>
+          <div class="edu"><b>Agente educativo</b><span id="edu-text"></span></div>
+          <div class="res-actions" id="res-actions"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- INSIGHTS -->
+<section id="insights" class="panel" hidden>
+  <div class="pagehead">
+    <div class="eyebrow">Insights · últimos 30 dias</div>
+    <h1>O que a liderança precisa saber, em quatro perguntas</h1>
+    <p>Dados simulados, combinados com as decisões que você gerar no Simulador nesta sessão. A visão é agregada por área.</p>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid2">
+    <section class="card sect"><div class="q">1 · Onde está o risco?</div><h2>Mapa de calor: área × tipo de dado</h2><p class="sub">Tentativas com dado restrito. Quanto mais escuro, maior o volume.</p><div class="scroll"><table class="heat" id="heat"></table></div></section>
+    <section class="card sect chart"><div class="q">1 · Onde está o risco?</div><h2>Tentativas críticas por dia</h2><p class="sub">Envios bloqueados por conter segredo ou dado restrito em ferramenta inadequada.</p><div id="trend"></div></section>
+  </div>
+  <div class="grid2 even">
+    <section class="card sect"><div class="q">2 · Estão usando IA fora do aprovado?</div><h2>Ferramentas fora do catálogo aprovado</h2><p class="sub">Número de tentativas por ferramenta.</p><div class="bars" id="shadow"></div>
+      <div class="legend"><span><i style="background:var(--ink)"></i>IA pública catalogada</span><span><i style="background:var(--gold)"></i>Não catalogada (shadow AI)</span></div></section>
+    <section class="card sect"><div class="q">3 · O programa está funcionando?</div><h2>Uso em ferramenta aprovada, por semana</h2><p class="sub">Parte das tentativas que seguiram pelo ambiente corporativo seguro.</p><div class="wk" id="wk"></div><div class="wkl" id="wkl"></div></section>
+  </div>
+  <section class="card sect" style="margin-bottom:20px"><div class="q">4 · O que foi tratado?</div><h2>Incidentes e playbooks</h2><p class="sub">Cada bloqueio crítico abre um incidente com os passos de tratamento do tipo de dado. Os bloqueios que você gerar no Simulador aparecem em “Aberto”.</p><div class="board" id="board"></div></section>
+  <div class="priv"><b>Privacidade por padrão.</b> No perfil Liderança o painel mostra apenas dados agregados por área. O nome do colaborador só aparece no perfil Segurança, e esse acesso deve ser registrado. Use o seletor Perfil no topo para ver a diferença.</div>
+</section>
+
+<!-- ARQUITETURA -->
+<section id="architecture" class="panel" hidden>
+  <div class="pagehead"><div class="eyebrow">Protótipo V2</div><h1>Arquitetura funcional</h1><p>O conteúdo só chega ao conector depois que identidade, contexto e política são avaliados.</p></div>
+  <div class="flow">
+    <article class="card node"><span class="step">1</span><h3>Usuário e contexto</h3><p>Identidade (SSO), área, cargo, hierarquia, gestor, ferramenta e finalidade.</p></article>
+    <article class="card node d"><span class="step">2</span><h3>Inspeção</h3><p>Segredos, dados pessoais, informação financeira, comercial e confidencial.</p></article>
+    <article class="card node"><span class="step">3</span><h3>Política</h3><p>Regras determinísticas combinam sensibilidade, ferramenta, finalidade, volume e autorização.</p></article>
+    <article class="card node d"><span class="step">4</span><h3>Ação</h3><p>Permitir, registrar, mascarar, pedir aprovação, revisar ou bloquear.</p></article>
+    <article class="card node"><span class="step">5</span><h3>Conector</h3><p>Somente conteúdo autorizado ou sanitizado seria enviado ao provedor de IA.</p></article>
+  </div>
+  <div class="rails">
+    <article class="card rail"><h3>Ambiente corporativo seguro</h3><p>A alternativa real à IA pública. O botão “Reenviar pelo ambiente corporativo” no Simulador mostra a ideia.</p></article>
+    <article class="card rail"><h3>Trilha de auditoria</h3><p>Registra contexto, regra, decisão, justificativa e horário. O texto integral não é gravado.</p></article>
+    <article class="card rail"><h3>Agente educativo</h3><p>Orienta o colaborador no momento da decisão, sem reutilizar o conteúdo sensível.</p></article>
+  </div>
+  <h2 class="h2s">Caminho de implantação</h2>
+  <p class="muted" style="max-width:760px">Medir primeiro, bloquear depois. É a sequência com menos atrito e mais resultado.</p>
+  <div class="road">
+    <article class="card rd"><div class="n">1</div><h3>Modo monitor</h3><p>Registrar e sinalizar por 2 a 4 semanas, sem bloquear, para formar a linha de base.</p></article>
+    <article class="card rd"><div class="n">2</div><h3>Ambiente seguro</h3><p>Oferecer a alternativa corporativa antes de restringir a pública.</p></article>
+    <article class="card rd"><div class="n">3</div><h3>Controle no ponto de uso</h3><p>Extensão de navegador com login corporativo. A identidade vem do SSO.</p></article>
+    <article class="card rd"><div class="n">4</div><h3>Bloqueio gradual</h3><p>Começar pelo crítico (segredos e dado pessoal) e ampliar com coaching e escalonamento.</p></article>
+  </div>
+  <h2 class="h2s">Do protótipo à produção</h2>
+  <div class="rails">
+    <article class="card rail"><h3>Detecção em camadas</h3><p>Hoje: palavras-chave e padrões. Evolução: validação de CPF, CNPJ e cartão, bibliotecas como Presidio e gitleaks, e classificador de IA para o que é semântico.</p></article>
+    <article class="card rail"><h3>Identidade e ponto de controle</h3><p>Hoje: formulário. Evolução: SSO e extensão de navegador interceptando o envio real.</p></article>
+    <article class="card rail"><h3>Medição</h3><p>Hoje: duas baterias de casos. Evolução: base maior, com precisão e recall por categoria.</p></article>
+  </div>
+</section>
+
+<!-- AUDITORIA -->
+<section id="audit" class="panel" hidden>
+  <div class="pagehead"><div class="eyebrow">Evidências</div><h1>Auditoria e validação</h1><p>Execute a bateria base (15 casos) e a bateria adversarial (6 casos difíceis). A segunda existe para mostrar onde o protótipo ainda falha, e se ele falha para o lado seguro.</p></div>
+  <div class="toolbar">
+    <div class="g"><button class="btn primary" id="run-base">Executar bateria base CV01–CV15</button><button class="btn gold" id="run-adv">Executar bateria adversarial CV16–CV21</button><button class="btn" id="export-csv">Exportar auditoria CSV</button></div>
+    <button class="btn ghost" id="clear-audit">Limpar auditoria</button>
+  </div>
+  <div class="sum" id="sum">
+    <div class="sbox"><b class="num" id="s-acc">—</b><span>Aderência às decisões esperadas</span></div>
+    <div class="sbox"><b class="num" id="s-crit">—</b><span>Casos críticos contidos (bloqueio ou retenção)</span></div>
+    <div class="sbox warn"><b class="num" id="s-safe">—</b><span>Desvios seguros (conteúdo retido ou mais restrito)</span></div>
+    <div class="sbox warn"><b class="num" id="s-exp">—</b><span>Exposições (conteúdo liberado sem o controle esperado)</span></div>
+  </div>
+  <div class="h2s" style="margin-top:0">Resultado da bateria</div>
+  <div class="tw"><table><thead><tr><th>Caso</th><th>O que testa</th><th>Esperado</th><th>Obtido</th><th>Status</th></tr></thead><tbody id="suite-body"><tr><td colspan="5">Execute uma bateria para ver o resultado caso a caso.</td></tr></tbody></table></div>
+  <div class="h2s" style="margin-top:0">Trilha de auditoria</div>
+  <div class="tw"><table><thead><tr><th>Horário</th><th>Caso</th><th>Usuário / área</th><th>Ferramenta</th><th>Risco</th><th>Decisão</th><th>Modo</th><th>Regra</th></tr></thead><tbody id="audit-body"></tbody></table></div>
+</section>
+
+<!-- REGRAS -->
+<section id="rules" class="panel" hidden>
+  <div class="pagehead"><div class="eyebrow">Governança determinística</div><h1>Matriz de regras</h1><p>A IA ajuda na classificação semântica. A decisão final segue regras fixas, reproduzíveis e auditáveis, avaliadas nesta ordem.</p></div>
+  <div class="rules">
+    <article class="card rule crit"><h3>1 · Segredo ou credencial</h3><p>Bloqueio em qualquer ferramenta, inclusive nas aprovadas.</p><code>SE segredo detectado → BLOQUEAR</code></article>
+    <article class="card rule crit"><h3>2 · Conteúdo restrito em IA pública</h3><p>Dados críticos ou confidenciais não saem do ambiente controlado.</p><code>SE restrito + IA pública → BLOQUEAR</code></article>
+    <article class="card rule"><h3>3 · Ferramenta ou informação desconhecida</h3><p>O sistema não inventa classificação quando a confiança é baixa.</p><code>SE baixa confiança → REVISÃO HUMANA</code></article>
+    <article class="card rule"><h3>4 · Grande volume confidencial</h3><p>O uso exige autorização da liderança responsável.</p><code>SE volume elevado → SOLICITAR APROVAÇÃO</code></article>
+    <article class="card rule mask"><h3>5 · Dados pessoais em ambiente aprovado</h3><p>O protótipo remove identificadores antes de liberar o conteúdo.</p><code>SE dado pessoal + IA aprovada → MASCARAR</code></article>
+    <article class="card rule ok"><h3>6 · Uso aprovado e compatível</h3><p>O conteúdo segue, com contexto e evidência da decisão. Conteúdo público ou anonimizado só é liberado sem registro quando não há dado restrito junto.</p><code>SE política atendida → PERMITIR E REGISTRAR</code></article>
+    <article class="card rule"><h3>Escalonamento</h3><p>O colaborador é sempre orientado. O gestor é avisado em caso grave, aprovação pendente ou reincidência. Segurança e DPO entram quando há segredo ou dado pessoal.</p><code>SE crítico OU 2ª ocorrência → AVISAR GESTOR</code></article>
+    <article class="card rule"><h3>Modo monitor</h3><p>Aplica as mesmas regras, registra a decisão que seria tomada e não interrompe o envio. Serve para medir antes de bloquear.</p><code>SE modo monitor → REGISTRAR, NÃO BLOQUEAR</code></article>
+  </div>
+</section>
+</main>
+<footer><span>Protótipo demonstrativo · Não use dados reais</span><span>Stark AI Gateway · Protótipo V2</span></footer>
+
+<script>
+/* ---------- dados base ---------- */
+const profiles=[
+ {name:'João Mendes',area:'Engenharia',role:'Desenvolvedor',hierarchy:'Analista',manager:'Marina Tech'},
+ {name:'Marina Costa',area:'Financeiro',role:'Analista Financeiro',hierarchy:'Analista',manager:'Ricardo Alves'},
+ {name:'Beatriz Souza',area:'Pessoas',role:'Business Partner',hierarchy:'Coordenação',manager:'Fernanda Lima'},
+ {name:'Lucas Ramos',area:'Comercial',role:'Executivo Comercial',hierarchy:'Analista',manager:'Patrícia Nunes'},
+ {name:'Sofia Nunes',area:'Marketing',role:'Analista de Marketing',hierarchy:'Analista',manager:'Caio Martins'},
+ {name:'Rafael Torres',area:'Dados',role:'Especialista de Dados',hierarchy:'Analista',manager:'Marina Tech'},
+ {name:'Camila Rocha',area:'Jurídico',role:'Advogada',hierarchy:'Coordenação',manager:'Eduardo Reis'},
+ {name:'Bruno Leal',area:'Produto',role:'Product Manager',hierarchy:'Gerência',manager:'Ana Freitas'},
+ {name:'Larissa Melo',area:'Atendimento',role:'Analista de Atendimento',hierarchy:'Operacional',manager:'Paulo Serra'}
+];
+const baseCases=[
+ {id:'CV01',area:'Engenharia',tool:'IA Pública A',purpose:'Apoio ao desenvolvimento',content:'Chave de API fictícia: sk_demo_stark_4f9a_secret. Revise este código.',expected:'BLOCK',risk:'CRÍTICA',info:'Chave/API secret'},
+ {id:'CV02',area:'Financeiro',tool:'IA Pública B',purpose:'Análise financeira',content:'Resultado financeiro ainda não divulgado: receita fictícia de R$ 248 milhões e margem de 31%.',expected:'BLOCK',risk:'CRÍTICA',info:'Resultado financeiro não divulgado'},
+ {id:'CV03',area:'Pessoas',tool:'IA Pública A',purpose:'Revisão de documento',content:'Folha e remuneração fictícia: Colaborador Exemplo, salário R$ 18.500 e CPF 000.000.000-00.',expected:'BLOCK',risk:'CRÍTICA',info:'Folha/remuneração'},
+ {id:'CV04',area:'Comercial',tool:'IA Pública B',purpose:'Criar proposta',content:'Proposta comercial confidencial para Cliente Exemplo, desconto especial de 18% e condições ainda não divulgadas.',expected:'BLOCK',risk:'CRÍTICA',info:'Proposta comercial'},
+ {id:'CV05',area:'Engenharia',tool:'Assistente de Código',purpose:'Apoio ao desenvolvimento',content:'Código-fonte fictício para revisão: function calculateFee(value) { return value * 0.012; }',expected:'ALLOW_REGISTER',risk:'MÉDIA',info:'Código-fonte'},
+ {id:'CV06',area:'Marketing',tool:'Gerador de Imagens',purpose:'Criar conteúdo público',content:'Campanha já publicada: Stark Week, conteúdo público disponível no site institucional.',expected:'ALLOW',risk:'BAIXA',info:'Campanha já publicada'},
+ {id:'CV07',area:'Dados',tool:'Plataforma de Dados IA',purpose:'Análise de dados',content:'Dados agregados e anonimizados: 42% das interações ocorreram pelo canal web, sem identificação individual.',expected:'ALLOW',risk:'BAIXA',info:'Dados agregados anonimizados'},
+ {id:'CV08',area:'Jurídico',tool:'Assistente Jurídico',purpose:'Revisão de documento',content:'Parecer jurídico confidencial fictício sobre cláusula contratual do Fornecedor Exemplo.',expected:'ALLOW_REGISTER',risk:'MÉDIA',info:'Parecer jurídico'},
+ {id:'CV09',area:'Produto',tool:'Assistente Corporativo A',purpose:'Planejamento interno',content:'Estratégia confidencial de lançamento do Produto Exemplo para o próximo trimestre.',expected:'ALLOW_REGISTER',risk:'MÉDIA',info:'Estratégia de lançamento'},
+ {id:'CV10',area:'Atendimento',tool:'IA Pública A',purpose:'Responder cliente',content:'Dados cadastrais do Cliente Fictício: CPF 000.000.000-00, e-mail cliente@exemplo.invalid.',expected:'BLOCK',risk:'CRÍTICA',info:'Dados cadastrais de cliente'},
+ {id:'CV11',area:'Financeiro',tool:'Assistente Corporativo A',purpose:'Análise financeira',content:'Projeção confidencial de receita e EBITDA fictícios para o próximo exercício.',expected:'ALLOW_REGISTER',risk:'MÉDIA',info:'Projeção de receita/EBITDA'},
+ {id:'CV12',area:'Engenharia',tool:'Assistente de Código',purpose:'Apoio ao desenvolvimento',content:'Configure o exemplo: API_KEY=demo_secret_stark_12345.',expected:'BLOCK',risk:'CRÍTICA',info:'Chave/API secret'},
+ {id:'CV13',area:'Qualquer',tool:'Ferramenta desconhecida',purpose:'Outro',content:'Informação sem classificação conhecida para análise.',expected:'REVIEW',risk:'REVISAR',info:'Informação sem classificação'},
+ {id:'CV14',area:'Marketing',tool:'IA Pública B',purpose:'Criar conteúdo público',content:'Campanha já publicada e conteúdo público: texto institucional do Produto Exemplo.',expected:'ALLOW',risk:'BAIXA',info:'Campanha já publicada'},
+ {id:'CV15',area:'Comercial',tool:'Assistente Corporativo A',purpose:'Criar proposta',content:'Lote com 10 arquivos de propostas comerciais confidenciais para revisão em massa.',expected:'APPROVAL',risk:'ALTA',info:'10 arquivos de propostas'}
+];
+const advCases=[
+ {id:'CV16',area:'Engenharia',tool:'IA Pública A',purpose:'Apoio ao desenvolvimento',content:'Segue o valor codificado: ZGVtb19zZWNyZXRfc3RhcmtfMTIzNDU=',expected:'BLOCK',risk:'CRÍTICA',info:'Segredo codificado, sem palavra-chave'},
+ {id:'CV17',area:'Atendimento',tool:'IA Pública B',purpose:'Responder cliente',content:'Maria da Silva, nascida em 12/03/1985, mora na Rua das Flores, 120, apto 4.',expected:'BLOCK',risk:'CRÍTICA',info:'Dado pessoal em texto livre'},
+ {id:'CV18',area:'Atendimento',tool:'IA Pública A',purpose:'Responder cliente',content:'Documento do cliente: 000.000.000-00.',expected:'BLOCK',risk:'CRÍTICA',info:'CPF sem a palavra “CPF”'},
+ {id:'CV19',area:'Marketing',tool:'Assistente Corporativo A',purpose:'Criar conteúdo público',content:'Campanha já publicada. Anexo: API_KEY=demo_secret_stark_999.',expected:'BLOCK',risk:'CRÍTICA',info:'Conteúdo público misturado com segredo'},
+ {id:'CV20',area:'Comercial',tool:'IA Pública B',purpose:'Criar proposta',content:'Confidential commercial proposal for Example Client, special discount of 20%.',expected:'BLOCK',risk:'CRÍTICA',info:'Informação comercial em inglês'},
+ {id:'CV21',area:'Produto',tool:'Assistente Corporativo A',purpose:'Planejamento interno',content:'Campanha já publicada. Estratégia confidencial de lançamento do Produto Exemplo para o próximo trimestre.',expected:'ALLOW_REGISTER',risk:'MÉDIA',info:'Marcador “público” junto com dado restrito'}
+];
+const allCases=[...baseCases,...advCases];
+const areas=['Atendimento','Comercial','Dados','Engenharia','Financeiro','Jurídico','Marketing','Pessoas','Produto','Qualquer'];
+const toolsList=['IA Pública A','IA Pública B','Assistente de Código','Gerador de Imagens','Plataforma de Dados IA','Assistente Jurídico','Assistente Corporativo A','Ferramenta desconhecida'];
+const purposes=['Apoio ao desenvolvimento','Análise financeira','Revisão de documento','Criar proposta','Criar conteúdo público','Análise de dados','Planejamento interno','Responder cliente','Outro'];
+const approvedTools=['Assistente de Código','Gerador de Imagens','Plataforma de Dados IA','Assistente Jurídico','Assistente Corporativo A'];
+const toolClass=t=>approvedTools.includes(t)?'aprovada':/IA Pública/i.test(t)?'publica':'desconhecida';
+const rank={ALLOW:0,ALLOW_REGISTER:1,MASK:2,APPROVAL:3,REVIEW:4,BLOCK:5};
+
+const actionMeta={
+ BLOCK:{title:'ENVIO BLOQUEADO',sub:'A exposição foi evitada antes do conector.',icon:'×',tone:'crit',cls:'crit'},
+ REVIEW:{title:'REVISÃO HUMANA',sub:'O conteúdo permanece retido.',icon:'?',tone:'warn',cls:'warn'},
+ APPROVAL:{title:'APROVAÇÃO NECESSÁRIA',sub:'O gestor deve autorizar antes do envio.',icon:'!',tone:'warn',cls:'warn'},
+ MASK:{title:'CONTEÚDO MASCARADO',sub:'Somente a versão sanitizada seria enviada.',icon:'◐',tone:'mask',cls:'mask'},
+ ALLOW_REGISTER:{title:'PERMITIDO COM REGISTRO',sub:'Uso aprovado e rastreável.',icon:'✓',tone:'ok',cls:'ok'},
+ ALLOW:{title:'ENVIO PERMITIDO',sub:'Uso compatível com a política.',icon:'✓',tone:'ok',cls:'ok'},
+ CONTEST:{title:'DECISÃO CONTESTADA',sub:'',icon:'↺',tone:'warn',cls:'warn'}
+};
+const playbooks={
+ 'Segredo/credencial':['Rotacionar a chave ou credencial exposta','Revisar os logs de uso da credencial','Orientar o colaborador e registrar o incidente'],
+ 'Dado pessoal':['Confirmar se algum envio chegou ao provedor','Acionar o DPO','Avaliar comunicação à ANPD se houver risco (LGPD, art. 48)'],
+ 'Informação financeira':['Confirmar se houve envio efetivo','Notificar Jurídico e Relações com Investidores','Revisar quem acessou a informação'],
+ 'Informação comercial':['Confirmar o escopo da informação','Avisar o gestor comercial','Avaliar cláusulas de confidencialidade com o cliente'],
+ 'Código-fonte':['Confirmar se o trecho é proprietário','Avisar o líder de engenharia','Reforçar o uso do assistente de código aprovado'],
+ 'Estratégia':['Confirmar o escopo','Avisar o gestor responsável','Reforçar o uso do assistente corporativo']
+};
+
+/* ---------- utilidades ---------- */
+const $=id=>document.getElementById(id);
+const norm=t=>(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const esc=t=>String(t).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
+const fmt=n=>Number(n).toLocaleString('pt-BR');
+let mode='enforce', role='lead', audit=[], suiteRows=[], current=null, userCount={};
+
+/* ---------- motor de decisão ---------- */
+function detect(text){
+  const t=norm(text); const found=new Map();
+  const hit=(name,rx)=>{const m=t.match(new RegExp(rx.source,'g'));if(m)found.set(name,(found.get(name)||0)+m.length)};
+  hit('Segredo/credencial',/(api[_\s-]?key|chave.{0,12}api|secret|sk_[a-z0-9_]+|\btoken\b|senha|credencial|akia[0-9a-z]{12,}|ghp_[a-z0-9]{20,}|begin [a-z ]*private key)/);
+  hit('Informação financeira',/(resultado financeiro|nao divulgado|ebitda|projecao.{0,18}receita|margem.{0,10}%|receita ficticia)/);
+  hit('Dado pessoal',/(\bcpf\b|folha|remuneracao|dados cadastrais|salario|cliente ficticio|\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/);
+  hit('Informação comercial',/(proposta comercial|propostas comerciais|desconto especial|condicoes ainda nao divulgadas)/);
+  hit('Estratégia',/(estrategia.{0,20}lancamento|planejamento confidencial)/);
+  hit('Parecer jurídico',/(parecer juridico)/);
+  hit('Código-fonte',/(codigo-fonte|function\s|class\s|return\s)/);
+  hit('Conteúdo público',/(ja publicada|conteudo publico|site institucional)/);
+  hit('Dados anonimizados',/(anonimizad|dados agregados)/);
+  hit('Volume elevado',/(10 arquivos|lote.{0,20}arquivos|revisao em massa)/);
+  return [...found.entries()].map(([name,n])=>({name,n}));
+}
+function sanitize(text){
+  return text
+   .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g,'[CPF MASCARADO]')
+   .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[E-MAIL MASCARADO]')
+   .replace(/(sal[aá]rio\s*(?:de|:)?\s*)R\$\s*[\d.,]+/gi,'$1[VALOR MASCARADO]');
+}
+function decide(input){
+  const ev=detect(input.content), tags=ev.map(e=>e.name);
+  const publicTool=/IA Pública/i.test(input.tool);
+  const secret=tags.includes('Segredo/credencial'), personal=tags.includes('Dado pessoal'), highVolume=tags.includes('Volume elevado');
+  const restricted=tags.some(x=>['Informação financeira','Dado pessoal','Informação comercial','Estratégia','Parecer jurídico','Código-fonte'].includes(x));
+  const publicContent=tags.includes('Conteúdo público')&&!restricted, anonymized=tags.includes('Dados anonimizados')&&!restricted;
+  const unknown=/desconhecida/i.test(input.tool)||tags.length===0||/sem classificacao/.test(norm(input.content));
+  let action,risk,rule,education,payload;
+  if(secret){action='BLOCK';risk='CRÍTICA';rule='Segredos e credenciais são bloqueados em qualquer ferramenta.';education='Não compartilhe chaves, tokens ou senhas com assistentes de IA. Remova o segredo e providencie a rotação antes de continuar.';payload='ENVIO INTERROMPIDO ANTES DO CONECTOR\nNenhum conteúdo foi transmitido.'}
+  else if(publicTool&&restricted){action='BLOCK';risk='CRÍTICA';rule='Conteúdo crítico ou confidencial não pode ser enviado para uma IA pública.';education='Use uma ferramenta corporativa aprovada ou remova e anonimize as informações restritas antes de uma nova tentativa.';payload='ENVIO INTERROMPIDO ANTES DO CONECTOR\nNenhum conteúdo foi transmitido.'}
+  else if(unknown){action='REVIEW';risk='REVISAR';rule='Ferramenta ou informação sem classificação exige revisão humana.';education='Escolha uma ferramenta catalogada, informe a finalidade e peça avaliação da equipe de governança.';payload='CONTEÚDO RETIDO\nAguardando classificação e revisão humana.'}
+  else if(highVolume){action='APPROVAL';risk='ALTA';rule='Transferência em volume de conteúdo confidencial exige aprovação do gestor.';education='A solicitação foi retida para aprovação de '+input.manager+'. Reduza o volume ou envie só os trechos necessários.';payload='CONTEÚDO RETIDO\nAguardando aprovação do gestor antes do conector.'}
+  else if(personal){action='MASK';risk='MÉDIA';rule='Dados pessoais em ambiente aprovado devem ser mascarados antes do envio.';education='Os identificadores foram removidos. Confirme se o conteúdo sanitizado ainda atende à finalidade declarada.';payload='CONTEÚDO SANITIZADO QUE SERIA ENVIADO:\n\n'+sanitize(input.content)}
+  else if(publicContent||anonymized){action='ALLOW';risk='BAIXA';rule='Conteúdo público ou anonimizado, em uso compatível, pode ser enviado.';education='O uso está compatível com a finalidade declarada. Mantenha só as informações necessárias para a tarefa.';payload='CONTEÚDO AUTORIZADO QUE SERIA ENVIADO:\n\n'+input.content}
+  else{action='ALLOW_REGISTER';risk='MÉDIA';rule='Ferramenta aprovada e finalidade compatível: permitir com rastreabilidade.';education='A operação será registrada. Não acrescente credenciais, dados pessoais ou informações fora da finalidade informada.';payload='CONTEÚDO AUTORIZADO QUE SERIA ENVIADO:\n\n'+input.content}
+  const primary=['Segredo/credencial','Dado pessoal','Informação financeira','Informação comercial','Código-fonte','Estratégia','Parecer jurídico'].find(x=>tags.includes(x));
+  return {action,risk,rule,education,payload,tags,ev,primary,confidence:tags.length?'Alta':'Baixa'};
+}
+function categoryOf(tags){
+  if(tags.includes('Segredo/credencial'))return 'Segredos';
+  if(tags.includes('Dado pessoal'))return 'Dados pessoais';
+  if(tags.includes('Informação financeira'))return 'Financeiro';
+  if(tags.includes('Informação comercial'))return 'Comercial';
+  if(tags.includes('Código-fonte'))return 'Código-fonte';
+  if(tags.includes('Estratégia')||tags.includes('Parecer jurídico'))return 'Estratégia e jurídico';
+  return null;
+}
+
+/* ---------- dados simulados para Insights ---------- */
+const AREAS=['Engenharia','Financeiro','Pessoas','Comercial','Atendimento','Jurídico','Produto','Marketing','Dados'];
+const CATS=['Segredos','Dados pessoais','Financeiro','Comercial','Código-fonte','Estratégia e jurídico'];
+const AW={Engenharia:18,Financeiro:12,Pessoas:10,Comercial:14,Atendimento:12,Jurídico:6,Produto:8,Marketing:8,Dados:12};
+const CW={Engenharia:[9,1,0,0,8,1],Financeiro:[1,2,9,1,0,2],Pessoas:[0,9,2,0,0,2],Comercial:[0,2,2,9,0,3],Atendimento:[0,8,0,2,0,0],Jurídico:[0,3,1,2,0,8],Produto:[1,1,1,2,2,6],Marketing:[0,1,0,3,0,2],Dados:[2,4,1,0,3,1]};
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function pick(r,items,w){const tot=w.reduce((a,b)=>a+b,0);let x=r()*tot;for(let i=0;i<items.length;i++){x-=w[i];if(x<=0)return items[i]}return items[items.length-1]}
+function outcome(cat,cls){
+  if(cls==='aprovada')return cat==='Segredos'?'BLOCK':cat==='Dados pessoais'?'MASK':'ALLOW_REGISTER';
+  if(cls==='publica')return 'BLOCK';
+  return cat==='Segredos'?'BLOCK':'REVIEW';
+}
+const events=(function(){
+  const r=rng(2026), out=[]; const approved=['Assistente Corporativo A','Assistente de Código','Assistente Jurídico','Plataforma de Dados IA'];
+  const nonApproved=['IA Pública A','IA Pública B','Chatbot web não catalogado','Extensão de navegador com IA','App móvel de IA'];
+  for(let d=0;d<30;d++){
+    const n=16+Math.round(r()*6), p=0.45+0.38*d/29;
+    for(let i=0;i<n;i++){
+      const area=pick(r,AREAS,AREAS.map(a=>AW[a])), cat=pick(r,CATS,CW[area]);
+      const isApp=r()<p; const tool=isApp?approved[Math.floor(r()*approved.length)]:pick(r,nonApproved,[34,26,16,14,10]);
+      const cls=toolClass(tool), action=outcome(cat,cls);
+      out.push({d,area,cat,tool,cls,action,crit:action==='BLOCK',contested:action==='BLOCK'&&r()<.05});
+    }
+  }
+  return out;
+})();
+const incidents=[
+ {id:'INC-1038',type:'Segredo/credencial',sev:'crit',area:'Engenharia',user:'João Mendes',status:'done',hours:2.5,step:3},
+ {id:'INC-1039',type:'Dado pessoal',sev:'crit',area:'Atendimento',user:'Larissa Melo',status:'done',hours:5.0,step:3},
+ {id:'INC-1040',type:'Informação financeira',sev:'crit',area:'Financeiro',user:'Marina Costa',status:'done',hours:3.5,step:3},
+ {id:'INC-1041',type:'Informação comercial',sev:'crit',area:'Comercial',user:'Lucas Ramos',status:'doing',hours:0,step:1},
+ {id:'INC-1042',type:'Dado pessoal',sev:'crit',area:'Pessoas',user:'Beatriz Souza',status:'doing',hours:0,step:2},
+ {id:'INC-1043',type:'Segredo/credencial',sev:'crit',area:'Engenharia',user:'Rafael Torres',status:'open',hours:0,step:0}
+];
+let incSeq=1044;
+
+/* ---------- formulário ---------- */
+function fillSelect(id,vals){$(id).innerHTML=vals.map(v=>'<option>'+esc(v)+'</option>').join('')}
+function applyProfile(i){const p=profiles[Number(i)]||profiles[0];$('area').value=areas.includes(p.area)?p.area:'Qualquer';$('role').value=p.role;$('hierarchy').value=p.hierarchy;$('manager').value=p.manager}
+const profileForArea=a=>{const i=profiles.findIndex(p=>p.area===a);return i>=0?i:0};
+function loadScenario(){
+  const s=allCases.find(x=>x.id===$('scenario').value); if(!s)return;
+  const pi=profileForArea(s.area); $('user').value=String(pi); applyProfile(pi);
+  $('area').value=areas.includes(s.area)?s.area:'Qualquer'; $('tool').value=s.tool; $('purpose').value=s.purpose; $('content').value=s.content;
+  $('content-hint').textContent='O protótipo roda no navegador e não envia o conteúdo para serviços externos.'; $('content-hint').classList.remove('err');
+}
+function getInput(){
+  const p=profiles[Number($('user').value)]||profiles[0];
+  return {caseId:$('scenario').value||'AD-HOC',user:p.name,area:$('area').value,role:$('role').value.trim(),hierarchy:$('hierarchy').value,manager:$('manager').value.trim()||'Gestor da área',tool:$('tool').value,purpose:$('purpose').value,content:$('content').value.trim()};
+}
+
+/* ---------- decisão na tela ---------- */
+function metaFor(action,enforced){
+  const m=actionMeta[action];
+  if(!enforced&&['BLOCK','REVIEW','APPROVAL','MASK'].includes(action))
+    return {title:'REGISTRADO EM MONITOR',sub:'Em modo proteção, o resultado seria: '+m.title.toLowerCase()+'.',icon:'◉',tone:'mon',cls:'warn'};
+  return m;
+}
+function notifyList(input,result,enforced){
+  const key=input.user; const isNonAllow=!['ALLOW','ALLOW_REGISTER'].includes(result.action);
+  if(isNonAllow)userCount[key]=(userCount[key]||0)+1;
+  const repeat=(userCount[key]||0)>=2;
+  const crit=result.risk==='CRÍTICA'||result.action==='APPROVAL';
+  const list=[{t:'Colaborador (orientação imediata)',on:true}];
+  list.push({t:'Gestor: '+input.manager+(repeat&&!crit?' (reincidência)':''),on:crit||(repeat&&isNonAllow)});
+  const sec=result.tags.includes('Segredo/credencial');
+  const dpo=result.tags.includes('Dado pessoal')&&result.risk==='CRÍTICA';
+  list.push({t:'Segurança da informação',on:sec&&result.action==='BLOCK'});
+  list.push({t:'DPO',on:dpo});
+  return list;
+}
+function showDecision(input,result,enforced,notes,fresh){
+  const meta=metaFor(result.action,enforced);
+  $('decision').dataset.tone=meta.tone;
+  $('empty').hidden=true; $('result').hidden=false;
+  $('o-title').textContent=meta.title; $('o-sub').textContent=meta.sub; $('d-sub').textContent=meta.sub;
+  $('status').textContent=meta.icon;
+  const rp=$('o-risk'); rp.textContent='RISCO '+result.risk; rp.className='pill '+(result.risk==='CRÍTICA'?'crit':result.risk==='ALTA'||result.risk==='REVISAR'?'warn':result.risk==='BAIXA'?'ok':'');
+  $('tags').innerHTML=(result.ev.length?result.ev:[{name:'Baixa confiança',n:0}]).map(e=>'<span class="tag">'+esc(e.name)+(e.n>1?' ×'+e.n:'')+'</span>').join('');
+  $('conf').textContent='Confiança da classificação: '+result.confidence+'. Padrões encontrados: '+result.ev.reduce((a,e)=>a+e.n,0)+'.';
+  $('rule-text').textContent=result.rule;
+  $('payload').textContent=enforced||!['BLOCK','REVIEW','APPROVAL','MASK'].includes(result.action)?result.payload:'MODO MONITOR\nO envio não foi interrompido, e a decisão acima foi registrada.\n\n'+result.payload;
+  $('payload-title').textContent=result.action==='BLOCK'&&enforced?'Bloqueio comprovado':(['REVIEW','APPROVAL'].includes(result.action)&&enforced)?'Estado do conteúdo':'Prévia do conteúdo';
+  $('notify').innerHTML=notes.map(n=>'<span class="chip'+(n.on?' on':'')+'">'+esc(n.t)+(n.on?'':' · não acionado')+'</span>').join('');
+  const nb=$('next-block'), pb=playbooks[result.primary];
+  if(result.action==='BLOCK'&&result.risk==='CRÍTICA'&&pb){nb.hidden=false;$('next-steps').innerHTML=pb.map(s=>'<li>'+esc(s)+'</li>').join('')}else nb.hidden=true;
+  $('edu-text').textContent=result.education;
+  const ra=$('res-actions'); ra.innerHTML='';
+  const addBtn=(label,cls,fn,id)=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=label;if(id)b.id=id;b.addEventListener('click',()=>fn(b));ra.appendChild(b)};
+  if(result.action==='APPROVAL'&&enforced){addBtn('Registrar aprovação do gestor','primary',approve);addBtn('Recusar solicitação','danger',deny)}
+  if(['BLOCK','REVIEW'].includes(result.action)&&/IA Pública|desconhecida/i.test(input.tool)&&!result.tags.includes('Segredo/credencial'))
+    addBtn('Reenviar pelo ambiente corporativo','gold',resend);
+  if(['BLOCK','REVIEW'].includes(result.action)&&fresh)addBtn('Contestar decisão','',contest);
+}
+function analyze(){
+  const input=getInput(); const hint=$('content-hint');
+  if(!input.content){hint.textContent='Insira um conteúdo fictício ou carregue um caso de validação.';hint.classList.add('err');$('content').focus();return}
+  hint.textContent='O protótipo roda no navegador e não envia o conteúdo para serviços externos.';hint.classList.remove('err');
+  const result=decide(input), enforced=mode==='enforce';
+  const notes=notifyList(input,result,enforced);
+  current={input,result,enforced};
+  showDecision(input,result,enforced,notes,true);
+  addAudit(input,result,{live:true});
+  if(result.action==='BLOCK'&&result.risk==='CRÍTICA'&&result.primary){
+    incidents.unshift({id:'INC-'+(incSeq++),type:result.primary,sev:'crit',area:input.area==='Qualquer'?'Outras':input.area,user:input.user,status:'open',hours:0,step:0,live:true,monitor:!enforced});
+  }
+}
+function approve(){
+  if(!current)return;
+  const r={...current.result,action:'ALLOW_REGISTER',risk:'MÉDIA',rule:'Aprovação do gestor registrada; envio permitido com rastreabilidade.',education:'A aprovação foi registrada. Envie apenas os arquivos necessários e mantenha a finalidade declarada.',payload:'CONTEÚDO AUTORIZADO APÓS APROVAÇÃO\n\n'+current.input.content};
+  showDecision(current.input,r,true,[{t:'Colaborador (orientação imediata)',on:true},{t:'Gestor: '+current.input.manager,on:true}],false);
+  addAudit(current.input,r,{live:true}); current.result=r;
+}
+function deny(){
+  if(!current)return;
+  const r={...current.result,action:'BLOCK',risk:'ALTA',rule:'Gestor recusou a solicitação; conteúdo bloqueado.',education:'A solicitação foi recusada. Reduza o volume ou reformule a atividade antes de tentar de novo.',payload:'ENVIO INTERROMPIDO\nNenhum conteúdo foi transmitido.'};
+  showDecision(current.input,r,true,[{t:'Colaborador (orientação imediata)',on:true},{t:'Gestor: '+current.input.manager,on:true}],false);
+  addAudit(current.input,r,{live:true}); current.result=r;
+}
+function resend(){$('tool').value='Assistente Corporativo A';$('content-hint').textContent='Reenviado pelo ambiente corporativo seguro (Assistente Corporativo A).';analyze()}
+function contest(btn){
+  if(!current)return;
+  btn.disabled=true;btn.textContent='Contestação registrada';
+  const last=events.filter(e=>e.live).pop(); if(last)last.contested=true;
+  audit.unshift({time:nowStr(),caseId:current.input.caseId,user:current.input.user,area:current.input.area,tool:current.input.tool,risk:current.result.risk,action:'CONTEST',rule:'Colaborador contestou a decisão; encaminhada ao gestor para revisão.',mode:mode});
+  renderAudit();
+}
+
+/* ---------- auditoria ---------- */
+const nowStr=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function addAudit(input,result,opt={}){
+  audit.unshift({time:nowStr(),caseId:input.caseId,user:input.user,area:input.area,tool:input.tool,risk:result.risk,action:result.action,rule:result.rule,mode:opt.live?mode:'suíte'});
+  if(opt.live){
+    const cat=categoryOf(result.tags), cls=toolClass(input.tool);
+    events.push({d:29,area:AREAS.includes(input.area)?input.area:'Outras',cat,tool:input.tool,cls,action:result.action,crit:result.action==='BLOCK'&&result.risk==='CRÍTICA'&&mode==='enforce',contested:false,live:true,monitor:mode==='monitor',risk:result.risk});
+  }
+  renderAudit(); updateMetrics();
+}
+function renderAudit(){
+  const b=$('audit-body');
+  if(!audit.length){b.innerHTML='<tr><td colspan="8">Nenhuma decisão registrada nesta sessão.</td></tr>';return}
+  b.innerHTML=audit.map(r=>{const m=actionMeta[r.action]||{title:r.action,cls:'warn'};
+    return '<tr><td class="num">'+esc(r.time)+'</td><td><b>'+esc(r.caseId)+'</b></td><td>'+(role==='sec'?esc(r.user)+'<br>':'')+'<span class="muted">'+esc(r.area)+'</span></td><td>'+esc(r.tool)+'</td><td>'+esc(r.risk)+'</td><td class="act '+m.cls+'">'+esc(m.title)+'</td><td>'+esc(r.mode)+'</td><td>'+esc(r.rule)+'</td></tr>'}).join('');
+}
+function updateMetrics(){
+  const live=events.filter(e=>e.live&&e.risk==='CRÍTICA'); const total=live.length;
+  const blocked=live.filter(e=>e.action==='BLOCK'&&!e.monitor).length, released=total-blocked, mon=live.filter(e=>e.monitor).length;
+  $('m-rate').textContent=total?Math.round(blocked/total*100)+'%':'—';
+  $('m-rate-d').textContent=total?blocked+' de '+total+' tentativas críticas':'Nenhuma tentativa analisada';
+  $('m-exp').textContent=total?Math.round(released/total*100)+'%':'0%';
+  $('m-exp-d').textContent=released?(mon?mon+' em modo monitor (não interrompido)':released+' exposição(ões) crítica(s) liberada(s)'):'Meta preservada: 0%';
+  $('m-ev').textContent=audit.filter(r=>r.mode!=='suíte'&&r.action!=='CONTEST').length;
+}
+function runSuite(list,label){
+  const rows=[]; let pass=0,crit=0,critB=0,safe=0,exp=0;
+  list.forEach(s=>{
+    const pi=profileForArea(s.area),p=profiles[pi];
+    const input={caseId:s.id,user:p.name,area:s.area,role:p.role,hierarchy:p.hierarchy,manager:p.manager,tool:s.tool,purpose:s.purpose,content:s.content};
+    const r=decide(input); let st='ok';
+    const held=['BLOCK','REVIEW','APPROVAL'];
+    if(r.action!==s.expected){st=(held.includes(r.action)&&held.includes(s.expected))||rank[r.action]>rank[s.expected]?'safe':'exp'}
+    if(st==='ok')pass++;else if(st==='safe')safe++;else exp++;
+    if(s.expected==='BLOCK'){crit++;if(held.includes(r.action))critB++}
+    rows.push({s,r,st}); addAudit(input,r,{});
+  });
+  suiteRows=rows;
+  $('s-acc').textContent=Math.round(pass/list.length*100)+'%';
+  $('s-crit').textContent=critB+' de '+crit;
+  $('s-safe').textContent=safe; $('s-exp').textContent=exp;
+  $('sum').classList.add('on');
+  $('suite-body').innerHTML=rows.map(({s,r,st})=>{
+    const lab={ok:'Conforme',safe:'Desvio seguro',exp:'Exposição'}[st];
+    return '<tr><td><b>'+esc(s.id)+'</b></td><td>'+esc(s.info)+'</td><td>'+esc(actionMeta[s.expected].title)+'</td><td class="act '+actionMeta[r.action].cls+'">'+esc(actionMeta[r.action].title)+'</td><td class="st-'+st+'">'+lab+'</td></tr>'}).join('');
+}
+function exportCsv(){
+  if(!audit.length)return;
+  const head=['Horário','Caso','Usuário','Área','Ferramenta','Risco','Decisão','Modo','Regra'];
+  const rows=[head,...audit.map(r=>[r.time,r.caseId,role==='sec'?r.user:'restrito',r.area,r.tool,r.risk,(actionMeta[r.action]||{title:r.action}).title,r.mode,r.rule])];
+  const csv=rows.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const url=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download='auditoria-stark-ai-gateway.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+
+/* ---------- insights ---------- */
+function renderInsights(){
+  const ev=events;
+  const total=ev.length, blocked=ev.filter(e=>e.action==='BLOCK'&&!e.monitor).length;
+  const last7=ev.filter(e=>e.d>=23), appr7=last7.filter(e=>e.cls==='aprovada').length/last7.length;
+  const first7=ev.filter(e=>e.d<7), appr0=first7.filter(e=>e.cls==='aprovada').length/first7.length;
+  const contested=ev.filter(e=>e.contested).length;
+  const done=incidents.filter(i=>i.status==='done'&&i.hours>0), avgH=done.reduce((a,i)=>a+i.hours,0)/Math.max(done.length,1);
+  const crit1=ev.filter(e=>e.d<15&&e.crit).length/15, crit2=ev.filter(e=>e.d>=15&&e.crit).length/15;
+  const drop=crit1?Math.round((1-crit2/crit1)*100):0;
+  const k=[
+   ['Tentativas analisadas',fmt(total),'nos últimos 30 dias',''],
+   ['Envios críticos bloqueados',fmt(blocked),drop>0?'queda de '+drop+'% após o coaching':'sem variação','good'],
+   ['Uso em ferramenta aprovada',Math.round(appr7*100)+'%','era '+Math.round(appr0*100)+'% na 1ª semana','good'],
+   ['Contestações sobre bloqueios',blocked?(contested/blocked*100).toFixed(1).replace('.',',')+'%':'—',contested+' de '+blocked+' bloqueios',''],
+   ['Tempo médio de tratamento',avgH.toFixed(1).replace('.',',')+' h','incidentes resolvidos','']
+  ];
+  $('kpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="l">'+x[0]+'</div><div class="v num">'+x[1]+'</div><div class="d '+x[3]+'">'+x[2]+'</div></div>').join('');
+  // heatmap
+  const rows=[...AREAS]; if(ev.some(e=>e.area==='Outras'&&e.cat))rows.push('Outras');
+  const m={}; rows.forEach(a=>m[a]=CATS.map(()=>0));
+  ev.forEach(e=>{if(!e.cat||!m[e.area])return;m[e.area][CATS.indexOf(e.cat)]++});
+  const max=Math.max(...rows.flatMap(a=>m[a]),1);
+  $('heat').innerHTML='<thead><tr><th>Área</th>'+CATS.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(a=>'<tr><td>'+esc(a)+'</td>'+m[a].map(v=>'<td class="c" style="--i:'+(v/max).toFixed(2)+'">'+(v||'')+'</td>').join('')+'</tr>').join('')+'</tbody>';
+  // trend
+  const days=Array.from({length:30},(_,d)=>ev.filter(e=>e.d===d&&e.crit).length), ymax=Math.ceil(Math.max(...days)/5)*5||5;
+  const W=720,H=330,L=40,R=16,T=24,B=34, x=d=>L+(W-L-R)*d/29, y=v=>T+(H-T-B)*(1-v/ymax);
+  let g=''; for(let i=0;i<=4;i++){const v=ymax*i/4;g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="12" fill="var(--muted)">'+Math.round(v)+'</text>'}
+  const pts=days.map((v,d)=>x(d).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  const area='M'+x(0)+','+y(0)+' L'+pts.split(' ').join(' L')+' L'+x(29)+','+y(0)+' Z';
+  const xl=[[0,'-29 d'],[7,'-22 d'],[14,'-15 d'],[21,'-8 d'],[29,'hoje']].map(([d,t])=>'<text x="'+x(d)+'" y="'+(H-10)+'" text-anchor="'+(d===0?'start':d===29?'end':'middle')+'" font-size="12" fill="var(--muted)">'+t+'</text>').join('');
+  $('trend').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Tentativas críticas por dia nos últimos 30 dias, em queda após a ativação do coaching">'+g+
+   '<path d="'+area+'" fill="var(--gold)" fill-opacity=".16"/><polyline points="'+pts+'" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>'+
+   '<line x1="'+x(15)+'" x2="'+x(15)+'" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--gold)" stroke-width="2" stroke-dasharray="5 4"/>'+
+   '<text x="'+(x(15)+8)+'" y="'+(T+10)+'" font-size="12.5" font-weight="700" fill="var(--goldink)">Coaching ativado</text>'+
+   '<circle cx="'+x(29)+'" cy="'+y(days[29])+'" r="5" fill="var(--gold)" stroke="var(--surface)" stroke-width="2"/>'+xl+'</svg>';
+  // shadow ranking
+  const cnt={}; ev.forEach(e=>{if(e.cls!=='aprovada')cnt[e.tool]=(cnt[e.tool]||0)+1});
+  const rk=Object.entries(cnt).sort((a,b)=>b[1]-a[1]), mx=rk[0]?rk[0][1]:1;
+  $('shadow').innerHTML=rk.map(([t,n])=>'<div class="bar '+(toolClass(t)==='publica'?'pub':'')+'"><div class="t">'+esc(t)+'</div><div class="tr"><div class="fl" style="width:'+(n/mx*100)+'%"></div></div><div class="n">'+n+'</div></div>').join('');
+  // weekly approved
+  const wk=[0,1,2,3].map(w=>{const s=ev.filter(e=>e.d>=w*7+(w===3?2:0)&&e.d<(w===3?30:w*7+7));return s.filter(e=>e.cls==='aprovada').length/Math.max(s.length,1)});
+  $('wk').innerHTML=wk.map((v,i)=>'<div class="'+(i===3?'last':'')+'"><b class="num">'+Math.round(v*100)+'%</b><span class="c" style="height:'+(v*130)+'px"></span></div>').join('');
+  $('wkl').innerHTML=['Semana 1','Semana 2','Semana 3','Semana 4'].map(t=>'<span>'+t+'</span>').join('');
+  renderBoard();
+}
+const stNames={open:'Aberto',doing:'Em tratamento',done:'Resolvido'};
+function renderBoard(){
+  const cols=['open','doing','done'];
+  $('board').innerHTML=cols.map(c=>{
+    const list=incidents.filter(i=>i.status===c);
+    return '<div class="col"><h3><span>'+stNames[c]+'</span><span class="num">'+list.length+'</span></h3><div class="list">'+list.map(i=>{
+      const pb=playbooks[i.type]||[]; const sdone=Math.min(i.step,pb.length);
+      const nxt=c==='open'?'Iniciar tratamento':c==='doing'?(sdone<pb.length-1?'Concluir passo':'Resolver incidente'):'';
+      return '<div class="inc '+i.sev+'"><div class="h"><span>'+esc(i.id)+'</span><span>'+esc(i.type)+'</span></div>'+
+       '<div class="m">'+esc(i.area)+' · '+(role==='sec'?esc(i.user):'colaborador restrito')+(i.monitor?' · sinalizado em monitor':'')+'</div>'+
+       '<div class="pb">'+(c==='done'?'Tratado em '+i.hours.toFixed(1).replace('.',',')+' h':'Passo '+(Math.min(sdone+1,pb.length))+' de '+pb.length+': '+esc(pb[Math.min(sdone,pb.length-1)]||''))+'</div>'+
+       (nxt?'<button data-id="'+i.id+'">'+nxt+'</button>':'')+'</div>'}).join('')+'</div></div>'}).join('');
+  $('board').querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>{
+    const i=incidents.find(x=>x.id===b.dataset.id); const pb=playbooks[i.type]||[];
+    if(i.status==='open'){i.status='doing';i.step=1}
+    else if(i.step<pb.length-1){i.step++}
+    else{i.status='done';i.step=pb.length;i.hours=2+Math.round(Math.random()*30)/10}
+    renderBoard(); renderKpisOnly();
+  }));
+}
+function renderKpisOnly(){renderInsights()}
+
+/* ---------- navegação e controles ---------- */
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.tab===id)));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==id);
+  if(id==='insights')renderInsights();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function setMode(m){
+  mode=m; $('mode-monitor').setAttribute('aria-pressed',String(m==='monitor')); $('mode-enforce').setAttribute('aria-pressed',String(m==='enforce'));
+  $('modebar').classList.toggle('on',m==='monitor');
+}
+function setRole(r){
+  role=r; $('role-lead').setAttribute('aria-pressed',String(r==='lead')); $('role-sec').setAttribute('aria-pressed',String(r==='sec'));
+  renderAudit(); if(!$('insights').hidden)renderInsights();
+}
+function init(){
+  $('scenario').innerHTML+=allCases.map(s=>'<option value="'+s.id+'">'+s.id+' · '+esc(s.info)+'</option>').join('');
+  $('user').innerHTML=profiles.map((p,i)=>'<option value="'+i+'">'+esc(p.name)+' · '+esc(p.area)+'</option>').join('');
+  fillSelect('area',areas);fillSelect('tool',toolsList);fillSelect('purpose',purposes);applyProfile(0);
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+  $('mode-monitor').addEventListener('click',()=>setMode('monitor'));$('mode-enforce').addEventListener('click',()=>setMode('enforce'));
+  $('role-lead').addEventListener('click',()=>setRole('lead'));$('role-sec').addEventListener('click',()=>setRole('sec'));
+  $('user').addEventListener('change',e=>applyProfile(e.target.value));
+  $('load-scenario').addEventListener('click',loadScenario);
+  $('analyze').addEventListener('click',analyze);
+  $('clear-form').addEventListener('click',()=>{$('content').value='';$('scenario').value=''});
+  $('run-base').addEventListener('click',()=>runSuite(baseCases));
+  $('run-adv').addEventListener('click',()=>runSuite(advCases));
+  $('export-csv').addEventListener('click',exportCsv);
+  $('clear-audit').addEventListener('click',()=>{audit=[];suiteRows=[];events.splice(0,events.length,...events.filter(e=>!e.live));userCount={};$('sum').classList.remove('on');$('suite-body').innerHTML='<tr><td colspan="5">Execute uma bateria para ver o resultado caso a caso.</td></tr>';renderAudit();updateMetrics()});
+  // exemplo inicial pré-carregado para a primeira tela mostrar o que a ferramenta faz
+  $('scenario').value='CV10'; loadScenario();
+  showTab('simulator'); analyze();
+}
+init();
+</script>
+
+</body>
+</html>

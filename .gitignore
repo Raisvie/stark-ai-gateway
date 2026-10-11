@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Segredos e ambiente
+.env
+.streamlit/secrets.toml
+
+# Trilha de auditoria gerada ao usar o app
+runtime/
+
+# Materiais do desafio que não vão para o repositório público
+*.pdf
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+~$*.xlsx
