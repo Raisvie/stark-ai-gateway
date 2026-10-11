@@ -463,17 +463,19 @@ with tab_ins:
 
     st.write("")
     st.markdown("### Se o gateway estivesse ativo desde junho")
-    rcols = st.columns([1, 1, 1, 1.4])
+    rcols = st.columns(3)
     rcols[0].markdown(stat(f"{rs['criticos_bloqueados']}/{rs['criticos']}", "críticos bloqueados antes do envio",
                            "R01, R02 e R03 → bloqueio", "ok"), unsafe_allow_html=True)
     rcols[1].markdown(stat(f"{rs['altos_retidos']}/{rs['altos']}", "altos retidos", "aprovação, máscara ou revisão", "ok"),
                       unsafe_allow_html=True)
     rcols[2].markdown(stat(rs["liberados_sem_atrito"], "liberados sem atrito", "público, interno, confidencial aprovado", "gold"),
                       unsafe_allow_html=True)
-    with rcols[3]:
-        ct = pd.crosstab(rp["Risco original"], rp["Decisão do gateway"]).reindex(["Crítico", "Alto", "Médio", "Baixo"])
-        ct = ct.rename(columns={k2: v["titulo"].title() for k2, v in ACTIONS.items()})
-        st.dataframe(ct, width="stretch", height=200)
+    short = {"BLOCK": "Bloqueado", "REVIEW": "Revisão", "APPROVAL": "Aprovação", "MASK": "Mascarado",
+             "ALLOW_REGISTER": "Com registro", "ALLOW": "Permitido"}
+    ct = (pd.crosstab(rp["Risco original"], rp["Decisão do gateway"])
+          .reindex(index=["Crítico", "Alto", "Médio", "Baixo"], columns=list(short), fill_value=0).rename(columns=short))
+    ct.index.name = "Risco original → decisão do gateway"
+    st.dataframe(ct, width="stretch")
 
     st.write("")
     g1, g2 = st.columns(2, gap="large")
@@ -484,6 +486,7 @@ with tab_ins:
                                text=[f"{a} · {p:.0%}" for a, p in zip(pa["Alertas"], pa["%"])], textposition="outside",
                                hovertemplate="%{y}: %{x} alertas<extra></extra>", cliponaxis=False))
         fig.update_traces(marker_line_width=0)
+        fig.update_xaxes(range=[0, pa["Alertas"].max() * 1.25])
         st.plotly_chart(fig_style(fig, 260), width="stretch", config=PLOT_CFG)
         st.caption("Finalidade incompatível lidera (30%): aprovar a ferramenta não basta — o gateway checa a finalidade.")
     with g2:
@@ -503,6 +506,8 @@ with tab_ins:
     with g3:
         st.markdown("**3 · O risco está caindo?** — % de eventos críticos por mês")
         mc = analytics.monthly_critical(base)
+        meses = {"06": "Jun", "07": "Jul", "08": "Ago", "09": "Set (parcial)"}
+        mc["Mês"] = [meses.get(m[-2:], m) for m in mc["Mês"]]
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=mc["Mês"], y=mc["% crítico"], mode="lines+markers+text", line=dict(color=INK, width=2),
                                  marker=dict(size=9, color=INK, line=dict(color="white", width=2)),
@@ -511,23 +516,35 @@ with tab_ins:
         fig.add_hline(y=0.01, line=dict(color=CRIT, dash="dash", width=1.5), annotation_text="meta < 1%",
                       annotation_position="bottom right", annotation_font_color=CRIT)
         fig.update_yaxes(tickformat=".0%", range=[0, max(mc["% crítico"]) * 1.35])
+        fig.update_xaxes(type="category")
         st.plotly_chart(fig_style(fig, 260), width="stretch", config=PLOT_CFG)
         st.caption("Sem tendência sustentada de queda. Setembro é parcial (até 08/09).")
     with g4:
-        st.markdown("**4 · Que dado está exposto?** — alertas por área × tipo de informação")
-        hm = analytics.info_heatmap(base)
-        hm = hm.loc[hm.sum(axis=1).sort_values(ascending=False).index, hm.sum().sort_values(ascending=False).index]
-        fig = go.Figure(go.Heatmap(z=hm.values, x=hm.columns, y=hm.index, colorscale=[[0, "#FBF7EE"], [1, "#8A6B28"]],
-                                   xgap=2, ygap=2, showscale=False, text=hm.values, texttemplate="%{text}",
-                                   hovertemplate="%{y} · %{x}: %{z} alertas<extra></extra>"))
-        fig.update_xaxes(tickangle=-35, gridcolor="rgba(0,0,0,0)")
-        fig.update_yaxes(gridcolor="rgba(0,0,0,0)", autorange="reversed")
-        st.plotly_chart(fig_style(fig, 330), width="stretch", config=PLOT_CFG)
+        st.markdown("**4 · Quais áreas concentram risco?** — % de eventos alto/crítico por área")
+        ra = analytics.risk_by_area(base).iloc[::-1]
+        fig = go.Figure(go.Bar(x=ra["% alto/crítico"], y=ra.index, orientation="h", marker_color=INK,
+                               text=[f"{v:.0%} · {n}" for v, n in zip(ra["% alto/crítico"], ra["Alto"] + ra["Crítico"])],
+                               textposition="outside", cliponaxis=False, customdata=ra["Total"],
+                               hovertemplate="%{y}: %{x:.0%} de %{customdata} eventos<extra></extra>"))
+        fig.update_xaxes(tickformat=".0%", range=[0, ra["% alto/crítico"].max() * 1.3])
+        st.plotly_chart(fig_style(fig, 300), width="stretch", config=PLOT_CFG)
+        st.caption("Rótulo: % e nº de eventos alto/crítico. Segurança tem a maior taxa; Financeiro, o maior volume de alertas.")
 
-    st.markdown("**5 · Indicadores atuais × meta** (aba Indicadores_Atuais)")
+    st.markdown("**5 · Que dado está exposto, e por quem?** — alertas por tipo de informação × área")
+    hm = analytics.info_heatmap(base).T
+    hm = hm.loc[hm.sum(axis=1).sort_values(ascending=False).index, hm.sum().sort_values(ascending=False).index]
+    fig = go.Figure(go.Heatmap(z=hm.values, x=hm.columns, y=hm.index, colorscale=[[0, "#FBF7EE"], [1, "#8A6B28"]],
+                               xgap=2, ygap=2, showscale=False,
+                               text=[[str(v) if v else "" for v in row] for row in hm.values], texttemplate="%{text}",
+                               hovertemplate="%{y} · %{x}: %{z} alertas<extra></extra>"))
+    fig.update_xaxes(side="top", gridcolor="rgba(0,0,0,0)")
+    fig.update_yaxes(gridcolor="rgba(0,0,0,0)", autorange="reversed")
+    st.plotly_chart(fig_style(fig, 470), width="stretch", config=PLOT_CFG)
+
+    st.markdown("**6 · Indicadores atuais × meta** (aba Indicadores_Atuais)")
     st.dataframe(analytics.indicators(base), width="stretch", hide_index=True)
 
-    st.markdown("**6 · Fila de alertas**")
+    st.markdown("**7 · Fila de alertas**")
     al = base.alertas.copy()
     if ss.get("role") == "Segurança":
         st.caption("🔓 Perfil Segurança: IDs de usuário visíveis. Este acesso seria registrado na trilha de auditoria.")

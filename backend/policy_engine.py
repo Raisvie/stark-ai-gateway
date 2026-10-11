@@ -68,6 +68,9 @@ ACTIONS = {
     "ALLOW_REGISTER": {"titulo": "PERMITIDO COM REGISTRO", "sub": "Uso aprovado e rastreável.", "tom": "ok", "icone": "✓"},
     "ALLOW": {"titulo": "ENVIO PERMITIDO", "sub": "Uso compatível com a política.", "tom": "ok", "icone": "✓"},
 }
+# concordância: classificação -> (singular masculino, plural masculino)
+ADJ = {"Crítica": ("crítico", "críticos"), "Confidencial": ("confidencial", "confidenciais"),
+       "Interna": ("interno", "internos"), "Pública": ("público", "públicos")}
 RANK = {"ALLOW": 0, "ALLOW_REGISTER": 1, "MASK": 2, "APPROVAL": 3, "REVIEW": 4, "BLOCK": 5}
 EXPECTED_TO_ACTION = {"CRÍTICO": "BLOCK", "ALTO": "APPROVAL", "MÉDIO": "ALLOW_REGISTER", "BAIXO": "ALLOW", "REVISAR": "REVIEW"}
 
@@ -150,7 +153,7 @@ def decide(ctx: Context, insp: Inspection, enforce: bool = True) -> Decision:
         else:
             rule, text = "R01", "Qualquer informação Confidencial em IA não aprovada"
         dec = d("BLOCK", "Crítico", rule, text,
-                f"'{ctx.tool}' não tem contrato corporativo nem logs: conteúdo {sens.lower()} não pode sair do ambiente controlado.")
+                f"'{ctx.tool}' não tem contrato corporativo nem logs: conteúdo {ADJ[sens][0]} não pode sair do ambiente controlado.")
     # 3 — sem base para decidir: falha segura
     elif cls == "desconhecida":
         dec = d("REVIEW", "Revisar", "R14", "Evento sem usuário/ferramenta/data confiável",
@@ -161,7 +164,7 @@ def decide(ctx: Context, insp: Inspection, enforce: bool = True) -> Decision:
     # 4 — volume
     elif restricted and insp.volume_items >= 10:
         dec = d("APPROVAL", "Alto", "R11", "Upload massivo de arquivos confidenciais em curto período",
-                f"{insp.volume_items} itens {sens.lower()}s de uma vez exigem autorização de {ctx.manager}.")
+                f"{insp.volume_items} itens {ADJ[sens][1]} de uma vez exigem autorização de {ctx.manager}.")
     # 5 — dado pessoal em ambiente aprovado
     elif insp.has_personal:
         dec = d("MASK", "Médio", "R07", "Confidencial em ferramenta corporativa aprovada (+ LGPD: minimização)",

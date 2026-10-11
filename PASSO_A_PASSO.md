@@ -183,6 +183,18 @@ Controles no topo: **Modo** Proteção/Monitor e **Perfil** Liderança (só agre
 - Teste de fluxo da tela com `streamlit.testing.AppTest`: cenário → bloqueio → reenvio seguro → máscara; chat; monitor. Sem erros.
 - App iniciado com `streamlit run app.py` e health check `200 OK`.
 
+## Etapa 9 — Repositório no GitHub e README de vitrine
+
+- Repositório público: https://github.com/Raisvie/stark-ai-gateway (só a planilha vai junto; PDFs e `runtime/` ficam no `.gitignore`).
+- Prints reais das telas capturados com Playwright (Chrome em modo headless) em `docs/img/`.
+- Ver a tela renderizada revelou problemas que os testes não pegavam, todos corrigidos:
+  - concordância: "conteúdo crítica" → "conteúdo crítico"; "itens confidencials" → "itens confidenciais";
+  - rótulo do Pareto cortado; tabela de reprocessamento mostrando só 2 de 6 colunas;
+  - gráfico mensal com datas quinzenais em inglês → meses em português, setembro marcado como parcial;
+  - mapa de calor ilegível → largura total, tipos de informação na vertical, zeros ocultos;
+  - novo gráfico "% alto/crítico por área"; botão "Deploy" do Streamlit escondido (`toolbarMode = "viewer"`).
+- README reescrito para jurados: problema, solução, diagrama, demonstração com prints, evidências, como rodar.
+
 ## Como apresentar (roteiro sugerido, ~4 min)
 
 1. **Gateway → "Pessoas · folha na IA pública"** → Analisar: bloqueio + Íris explica.
