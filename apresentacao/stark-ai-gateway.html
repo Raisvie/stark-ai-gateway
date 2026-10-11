@@ -1,0 +1,442 @@
+<meta charset="utf-8">
+<title>Stark AI Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+/* Layout: dossiê executivo. Faixa navy de abertura com fio dourado, páginas marfim em coluna única
+   de leitura, uma seção interativa (demonstração) como único bloco destacado. Dourado só nos números que importam. */
+:root{
+  --paper:#FAFAF7; --surface:#FFFFFF; --ink:#1B2B4C; --muted:#5A6782; --line:#E3E1D8;
+  --gold:#B8893A; --goldink:#8A6B28; --goldsoft:#F4EDDD;
+  --band:#1B2B4C; --bandink:#F5F2EA; --bandmuted:#A9B4CC; --bandline:rgba(255,255,255,.16);
+  --crit:#A8434B; --critsoft:#F7E8E9; --ok:#2F7D5B; --oksoft:#E4F2EB; --mask:#4B5E8E; --masksoft:#E7EBF5;
+  --warn:#8A6B28; --warnsoft:#F6F0E2; --code:#14203B; --codeink:#DDE3F0;
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --body:"Albert Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --s1:13px; --s2:15px; --s3:17px; --s4:22px; --s5:30px; --s6:clamp(32px,4.6vw,52px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E1730; --surface:#16223F; --ink:#EEF0F5; --muted:#A3AECA; --line:#2A3858;
+  --gold:#D8B573; --goldink:#D8B573; --goldsoft:#2A2519;
+  --band:#0A1124; --bandink:#F5F2EA; --bandmuted:#9FACC6; --bandline:rgba(255,255,255,.12);
+  --crit:#E69AA1; --critsoft:#3A2029; --ok:#78D0A6; --oksoft:#173329; --mask:#A5B6EA; --masksoft:#222E50;
+  --warn:#D8B573; --warnsoft:#2A2519; --code:#0A1124; --codeink:#DDE3F0;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1730; --surface:#16223F; --ink:#EEF0F5; --muted:#A3AECA; --line:#2A3858;
+  --gold:#D8B573; --goldink:#D8B573; --goldsoft:#2A2519;
+  --band:#0A1124; --bandink:#F5F2EA; --bandmuted:#9FACC6; --bandline:rgba(255,255,255,.12);
+  --crit:#E69AA1; --critsoft:#3A2029; --ok:#78D0A6; --oksoft:#173329; --mask:#A5B6EA; --masksoft:#222E50;
+  --warn:#D8B573; --warnsoft:#2A2519; --code:#0A1124; --codeink:#DDE3F0;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:var(--s3);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,ol,ul,figure{margin:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;letter-spacing:-.01em;line-height:1.12}
+h2{font-size:var(--s5)}
+h3{font-size:var(--s4)}
+b{font-weight:700}
+.num{font-variant-numeric:tabular-nums}
+.wrap{width:min(1080px,100%);margin-inline:auto;padding-inline:20px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--goldink)}
+.lede{color:var(--muted);max-width:64ch}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--gold) 60%,transparent);outline-offset:2px}
+
+/* abertura */
+.top{background:var(--band);color:var(--bandink);border-bottom:3px solid var(--gold)}
+.brandrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-block:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand b{display:block;font-family:var(--display);font-size:20px;letter-spacing:.2em;line-height:1}
+.brand small{display:block;font-size:10.5px;letter-spacing:.26em;color:var(--bandmuted);margin-top:3px}
+.tagline{font-size:12.5px;color:var(--bandmuted);border:1px solid var(--bandline);border-radius:999px;padding:5px 12px}
+.hero{display:grid;gap:22px;padding-block:44px 40px;border-top:1px solid var(--bandline)}
+.hero .eyebrow{color:var(--gold)}
+.hero h1{font-size:var(--s6);max-width:20ch;color:var(--bandink)}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p{color:var(--bandmuted);font-size:var(--s3);max-width:62ch}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:10px;border-top:1px solid var(--bandline)}
+.fig{padding:18px 20px 4px 0;display:grid;gap:4px}
+.fig + .fig{padding-left:20px;border-left:1px solid var(--bandline)}
+.fig .v{font-family:var(--display);font-size:clamp(34px,4.4vw,48px);font-weight:700;line-height:1;color:var(--gold)}
+.fig .l{font-size:var(--s2);color:var(--bandink);max-width:26ch}
+
+/* seções */
+section{padding-block:64px 8px}
+.head{display:grid;gap:10px;margin-bottom:28px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;align-items:start}
+.facts{list-style:none;padding:0;display:grid;gap:18px}
+.facts li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:baseline;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.facts .v{font-family:var(--display);font-size:34px;font-weight:700;line-height:1}
+.facts .v.crit{color:var(--crit)}
+.facts p{font-size:var(--s2);color:var(--muted)}
+.facts p b{color:var(--ink)}
+.chart-title{font-weight:700;font-size:var(--s2);margin-bottom:4px}
+.chart-sub{font-size:var(--s1);color:var(--muted);margin-bottom:16px}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:6px 12px;align-items:center;font-size:var(--s2)}
+.bar .t{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px}
+.bar .t span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar .tr{grid-column:1/-1;height:10px;background:var(--goldsoft);border-radius:2px;overflow:hidden}
+.bar .fl{height:100%;background:var(--gold);border-radius:0 2px 2px 0}
+
+/* como funciona */
+.steps{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;counter-reset:s}
+.steps li{display:grid;gap:8px;align-content:start;padding-top:16px;border-top:2px solid var(--ink)}
+.steps li::before{counter-increment:s;content:"Passo " counter(s);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--goldink)}
+.steps p{font-size:var(--s2);color:var(--muted)}
+.outcomes{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-crit{background:var(--critsoft);color:var(--crit)} .t-ok{background:var(--oksoft);color:var(--ok)}
+.t-mask{background:var(--masksoft);color:var(--mask)} .t-warn{background:var(--warnsoft);color:var(--warn)}
+
+/* demonstração */
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(27,43,76,.05),0 16px 40px rgba(27,43,76,.08);display:grid;grid-template-columns:270px minmax(0,1fr);overflow:hidden}
+.picker{background:var(--goldsoft);padding:18px 12px;display:grid;gap:4px;align-content:start;border-right:1px solid var(--line)}
+.picker .eyebrow{padding:0 10px 8px}
+.pick{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:6px;display:grid;gap:2px;font-size:var(--s2)}
+.pick small{font-size:12.5px;color:var(--muted)}
+.pick:hover{background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.pick[aria-pressed="true"]{background:var(--surface);box-shadow:inset 3px 0 0 var(--gold)}
+.stage{padding:24px 28px 28px;display:grid;gap:20px;min-width:0}
+.req{display:grid;gap:10px}
+.who{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:var(--s1);color:var(--muted)}
+.who b{color:var(--ink);font-weight:600}
+.quote{font-family:var(--mono);font-size:14px;line-height:1.6;padding:14px 16px;border-radius:6px;background:var(--paper);border:1px solid var(--line);overflow-wrap:anywhere}
+.verdict{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.verdict .pill{font-size:15px;padding:7px 14px}
+.found{font-size:var(--s1);color:var(--muted)}
+.iris{display:grid;grid-template-columns:88px minmax(0,1fr);gap:16px;align-items:start}
+.iris svg{max-width:100%;height:auto}
+.bubble{background:var(--goldsoft);border-radius:10px;padding:14px 18px;display:grid;gap:8px}
+.bubble .eyebrow{font-size:11px}
+.bubble h3{font-size:20px}
+.bubble p,.bubble ol{font-size:var(--s2)}
+.bubble ol{padding-left:20px;display:grid;gap:2px}
+.sent{display:grid;gap:6px}
+.sent .lab{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sent pre{margin:0;font-family:var(--mono);font-size:13.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--code);color:var(--codeink);border-radius:6px;padding:14px 16px}
+.notify{font-size:var(--s1);color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.stage.swap{animation:swap .28s ease-out}}
+@keyframes swap{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* íris por área */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.uses{display:grid;gap:0}
+.use{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr);gap:10px 32px;padding-block:22px;border-top:1px solid var(--line)}
+.use:last-child{border-bottom:1px solid var(--line)}
+.use h3{font-size:20px}
+.use .meta{display:grid;gap:8px;align-content:start}
+.use .meta p{font-size:var(--s2);color:var(--muted)}
+.tool{display:inline-block;justify-self:start;font-size:13px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--oksoft);color:var(--ok)}
+.use .prompt{font-family:var(--mono);font-size:13.5px;line-height:1.6;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-wrap:anywhere}
+.never{font-size:var(--s1);color:var(--muted);margin-top:8px}
+.never b{color:var(--crit);letter-spacing:.06em;font-size:12px;text-transform:uppercase;margin-right:6px}
+
+/* resultado */
+.replay{width:100%;border-collapse:collapse;font-size:var(--s2)}
+.replay th{text-align:left;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 0 10px;border-bottom:2px solid var(--ink)}
+.replay td{padding:14px 0;border-bottom:1px solid var(--line);vertical-align:baseline}
+.replay td.big{font-family:var(--display);font-size:28px;font-weight:700;white-space:nowrap;padding-right:16px}
+.replay td.big.ok{color:var(--ok)} .replay td.big.gold{color:var(--goldink)}
+.replay td small{display:block;color:var(--muted);font-size:var(--s1)}
+#trend{width:100%;height:auto;display:block}
+#trend text{font-family:var(--body);font-size:12px;fill:var(--muted)}
+#trend .lab{fill:var(--ink);font-weight:700;font-size:13px}
+#trend .meta{fill:var(--crit);font-weight:700}
+
+/* confiança */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.role{display:grid;gap:6px;align-content:start}
+.role .k{font-family:var(--display);font-size:26px;font-weight:700}
+.role p{font-size:var(--s2);color:var(--muted)}
+.proofs{list-style:none;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 32px;margin-top:30px}
+.proofs li{font-size:var(--s2);padding-left:22px;position:relative}
+.proofs li::before{content:"";position:absolute;left:2px;top:.55em;width:9px;height:9px;border-radius:2px;background:var(--gold)}
+
+/* próximos passos */
+.plan{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.plan li{display:grid;gap:6px;align-content:start;padding-top:14px;border-top:2px solid var(--gold)}
+.plan .when{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--goldink)}
+.plan p{font-size:var(--s2);color:var(--muted)}
+.ask{margin-top:40px;background:var(--band);color:var(--bandink);border-radius:10px;padding:28px 32px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
+.ask .eyebrow{color:var(--gold)}
+.ask h2{color:var(--bandink);margin-top:6px}
+.ask p{color:var(--bandmuted);font-size:var(--s2);margin-top:10px}
+.ask dl{margin:0;display:grid;gap:12px}
+.ask dt{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--bandmuted);font-weight:700}
+.ask dd{margin:2px 0 0;font-size:var(--s2)}
+.ask dd b{color:var(--gold)}
+footer{margin-top:64px;padding-block:22px;border-top:1px solid var(--line);font-size:var(--s1);color:var(--muted);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px}
+footer a{color:var(--goldink)}
+
+@media (max-width:860px){
+  .split,.ask,.use{grid-template-columns:minmax(0,1fr)}
+  .steps,.roles,.plan{grid-template-columns:minmax(0,1fr)}
+  .demo{grid-template-columns:minmax(0,1fr)}
+  .picker{border-right:0;border-bottom:1px solid var(--line);grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);overflow-x:auto}
+  .picker .eyebrow{display:none}
+  .proofs{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .figs{grid-template-columns:minmax(0,1fr)}
+  .fig + .fig{padding-left:0;border-left:0;border-top:1px solid var(--bandline)}
+  .stage{padding:18px}
+  .iris{grid-template-columns:60px minmax(0,1fr)}
+  .facts li{grid-template-columns:72px minmax(0,1fr)}
+  .ask{padding:22px}
+}
+</style>
+
+<header class="top">
+  <div class="wrap brandrow">
+    <div class="brand">
+      <svg width="30" height="34" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 2 31 7v11c0 9-6 15-14 18C9 33 3 27 3 18V7z" fill="none" stroke="#D8B573" stroke-width="2.2"/><path d="m10.5 18.5 5 5 8.5-10" fill="none" stroke="#D8B573" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>STARK</b><small>AI GATEWAY</small></div>
+    </div>
+    <span class="tagline">ITA Challenge Sprint · protótipo funcional</span>
+  </div>
+  <div class="wrap hero">
+    <span class="eyebrow">Proposta para a liderança</span>
+    <h1>Usar IA para entregar mais rápido, <em>sem deixar dado da Stark escapar.</em></h1>
+    <p>Um filtro que fica entre o colaborador e a ferramenta de IA. Ele confere o pedido antes do envio, segura o que não pode sair e mostra, na hora, o jeito certo de fazer a mesma tarefa.</p>
+    <div class="figs" id="figs"></div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap" aria-labelledby="h-prob">
+    <div class="split">
+      <div class="head">
+        <span class="eyebrow">O problema</span>
+        <h2 id="h-prob">Hoje, o alerta chega depois que o dado já saiu.</h2>
+        <p class="lede">Os registros de junho a setembro mostram que as pessoas já usam IA no dia a dia. A empresa só descobre o risco depois, e a fila de alertas não fecha.</p>
+        <ul class="facts" id="facts" style="margin-top:14px"></ul>
+      </div>
+      <figure>
+        <div class="chart-title">O que mais aparece nos alertas</div>
+        <div class="chart-sub" id="leak-sub"></div>
+        <div class="bars" id="leak"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-how">
+    <div class="head">
+      <span class="eyebrow">Como funciona</span>
+      <h2 id="h-how">Três passos, em segundos, sem mudar a rotina de ninguém.</h2>
+    </div>
+    <ol class="steps">
+      <li><h3>A pessoa faz o pedido</h3><p>Na ferramenta de IA que ela já usa: um resumo, um e-mail, uma análise. O login corporativo diz quem é, de qual área e para quê.</p></li>
+      <li><h3>O gateway confere</h3><p>Antes de sair, procura senhas, CPF, salários, resultados não divulgados, contratos e propostas. Também confere se a ferramenta é a certa para a tarefa.</p></li>
+      <li><h3>Uma decisão clara</h3><p>O pedido segue, segue sem os dados pessoais, espera o OK do gestor ou é bloqueado. A Íris, a assistente educativa, explica o motivo e oferece o caminho seguro.</p></li>
+    </ol>
+    <div class="outcomes" aria-label="Decisões possíveis">
+      <span class="pill t-ok">Liberado</span><span class="pill t-ok">Liberado e registrado</span>
+      <span class="pill t-mask">Liberado sem dados pessoais</span><span class="pill t-warn">Aguardando o OK do gestor</span>
+      <span class="pill t-warn">Retido para análise</span><span class="pill t-crit">Bloqueado antes do envio</span>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-demo">
+    <div class="head">
+      <span class="eyebrow">Veja na prática</span>
+      <h2 id="h-demo">Sete situações reais do dia a dia administrativo</h2>
+      <p class="lede">Decisões geradas pelo protótipo com os mesmos dados fictícios do desafio. Escolha uma situação.</p>
+    </div>
+    <div class="demo">
+      <div class="picker" role="group" aria-label="Situações" id="picker"><span class="eyebrow">Situações</span></div>
+      <div class="stage" id="stage" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-iris">
+    <div class="head">
+      <span class="eyebrow">Íris · produtividade com segurança</span>
+      <h2 id="h-iris">Além de proteger, ensina cada área a tirar proveito das IAs que a Stark já paga.</h2>
+      <p class="lede">Para cada área, os usos que mais economizam tempo, a ferramenta aprovada certa e um pedido pronto para copiar. Os <b>[marcadores]</b> ocupam o lugar dos dados reais.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Áreas" id="area-tabs"></div>
+    <div class="uses" id="uses" role="tabpanel"></div>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-res">
+    <div class="split">
+      <div class="head">
+        <span class="eyebrow">Resultado com os dados reais</span>
+        <h2 id="h-res">Se o gateway estivesse ligado desde junho</h2>
+        <p class="lede">Passamos todos os registros históricos pelo protótipo para ver o que teria acontecido com cada um.</p>
+        <table class="replay" style="margin-top:14px">
+          <thead><tr><th scope="col">Teria acontecido</th><th scope="col">Com quais registros</th></tr></thead>
+          <tbody id="replay"></tbody>
+        </table>
+      </div>
+      <figure>
+        <div class="chart-title">Usos críticos por mês, sem o gateway</div>
+        <div class="chart-sub">Percentual dos usos de IA classificados como críticos, frente à meta da própria Stark.</div>
+        <svg id="trend" viewBox="0 0 560 250" role="img" aria-label="Percentual de usos críticos por mês"></svg>
+        <div class="chart-sub" style="margin-top:8px">* Setembro tem registros só até o dia 8.</div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-trust">
+    <div class="head">
+      <span class="eyebrow">Por que confiar</span>
+      <h2 id="h-trust">A IA ajuda a entender o conteúdo. Quem decide são regras claras e pessoas.</h2>
+    </div>
+    <div class="roles">
+      <div class="role"><span class="k">IA</span><p>Lê o pedido, reconhece o tipo de informação, explica o risco e ensina o caminho certo.</p></div>
+      <div class="role"><span class="k">Regras</span><p>Decidem o bloqueio sempre do mesmo jeito. Nenhuma liberação crítica depende só de um modelo de IA.</p></div>
+      <div class="role"><span class="k">Pessoas</span><p>Gestores aprovam exceções. Segurança, Privacidade e Compliance são avisados quando precisam agir.</p></div>
+    </div>
+    <ul class="proofs" id="proofs"></ul>
+  </section>
+
+  <section class="wrap" aria-labelledby="h-next">
+    <div class="head">
+      <span class="eyebrow">Próximos passos</span>
+      <h2 id="h-next">Medir primeiro, bloquear depois</h2>
+      <p class="lede">A sequência com menos atrito: entender o uso real antes de interromper alguém.</p>
+    </div>
+    <ol class="plan">
+      <li><span class="when">Primeiros 30 dias</span><h3>Modo observação</h3><p>O gateway registra e mostra o que faria, sem bloquear. Em seguida, liga o bloqueio só para senhas e dados críticos em IA pública.</p></li>
+      <li><span class="when">Dias 31 a 60</span><h3>Um caminho único</h3><p>Extensão no navegador com o login corporativo, para que todo uso de IA passe pelo mesmo ponto e fique registrado.</p></li>
+      <li><span class="when">Dias 61 a 90</span><h3>Escala com a Íris</h3><p>Guias por área, acompanhamento de reincidência e ajuste das regras com base no que o piloto ensinou.</p></li>
+    </ol>
+    <div class="ask">
+      <div>
+        <span class="eyebrow">O que propomos</span>
+        <h2>Um piloto de 30 dias com Financeiro e Pessoas</h2>
+        <p>As duas áreas administrativas que mais aparecem nos alertas, com dados financeiros e pessoais, os mais sensíveis da base. Começa em modo observação, sem bloquear ninguém no primeiro momento.</p>
+      </div>
+      <dl>
+        <div><dt>Meta principal</dt><dd><b>100%</b> das tentativas críticas bloqueadas antes do envio</dd></div>
+        <div><dt>Adoção</dt><dd>Mais uso das ferramentas aprovadas e menos uso de IA pública</dd></div>
+        <div><dt>Operação</dt><dd>Fila de alertas pendentes em queda, com cada caso registrado do início ao fim</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>Dados 100% fictícios fornecidos pelo desafio. Alertas não comprovam fraude nem vazamento.</span>
+  <span>Protótipo e código: <a href="https://github.com/Raisvie/stark-ai-gateway">github.com/Raisvie/stark-ai-gateway</a></span>
+</footer>
+
+<script>
+const DATA = {"n": {"eventos": 650, "alertas": 160, "pendentes": 113, "criticos": 74, "usuarios": 72, "areas": 12, "bloq": 74, "crit": 74, "altos_ret": 86, "altos": 86, "livres": 384, "total": 650, "testes_ok": 21, "testes": 21, "exposicoes": 0, "leak": [{"label": "Dados financeiros e resultados", "n": 61}, {"label": "Senhas e chaves de sistemas", "n": 35}, {"label": "Dados pessoais de clientes e colaboradores", "n": 31}, {"label": "Estratégia e propostas comerciais", "n": 17}, {"label": "Contratos e pareceres", "n": 11}, {"label": "Código e arquitetura", "n": 5}], "monthly": [{"m": "Jun", "v": 0.1055}, {"m": "Jul", "v": 0.1005}, {"m": "Ago", "v": 0.1388}, {"m": "Set*", "v": 0.0943}]}, "scenarios": [{"title": "Folha de pagamento numa IA pública", "area": "Pessoas", "cargo": "Analista de remuneração", "tool": "IA Pública A", "purpose": "Analisar dados", "qty": 1, "text": "Analise a folha de pagamento de setembro e aponte desvios: Ana Souza, salário R$ 9.200, CPF 529.982.247-25; Bruno Lima, salário R$ 12.400.", "label": "Bloqueado antes do envio", "tone": "crit", "found": ["Dados cadastrais de cliente", "Folha/remuneração"], "sent": "Nada. O envio foi interrompido antes de chegar à ferramenta.", "mood": "alerta", "headline": "Essa informação não pode ir para a IA Pública A", "message": "Encontrei <b>dados cadastrais de cliente, folha/remuneração</b>. 'IA Pública A' não tem contrato corporativo nem logs: conteúdo crítico não pode sair do ambiente controlado. Nada foi enviado — a proteção agiu antes da conexão. Não é uma punição: é a vacina funcionando.", "steps": ["Use <b>Plataforma de Dados IA</b> — mesma tarefa, ambiente protegido", "Ou anonimize o conteúdo com a sugestão abaixo", "Se precisar de exceção, peça ao gestor"], "notify": ["Colaborador", "Gestor: Gestor(a) de Pessoas", "DPO / Privacidade (LGPD)"]}, {"title": "A mesma tarefa, pelo caminho seguro", "area": "Pessoas", "cargo": "Analista de remuneração", "tool": "Plataforma de Dados IA", "purpose": "Analisar dados", "qty": 1, "text": "Analise a folha de pagamento de setembro e aponte desvios: [NOME], salário [VALOR] CPF [CPF]; [NOME], salário [VALOR]", "label": "Liberado sem dados pessoais", "tone": "mask", "found": ["Folha/remuneração"], "sent": "Analise a folha de pagamento de setembro e aponte desvios: [NOME], salário [VALOR] CPF [CPF]; [NOME], salário [VALOR]", "mood": "mascara", "headline": "Pode seguir — removi os dados pessoais", "message": "A ferramenta é aprovada, mas a tarefa não precisa de <b>folha/remuneração</b>. Só a versão mascarada vai para a IA; depois você recoloca os dados no texto final.", "steps": ["Confira se a versão mascarada ainda atende ao pedido", "Recoloque os dados reais fora da IA"], "notify": ["Colaborador"]}, {"title": "Resultado antes da divulgação", "area": "Financeiro", "cargo": "Controller", "tool": "IA Pública B", "purpose": "Apoiar decisão", "qty": 1, "text": "Resultado financeiro ainda não divulgado: receita de R$ 248 milhões e margem de 31%. Monte um resumo para a diretoria.", "label": "Bloqueado antes do envio", "tone": "crit", "found": ["Resultado financeiro não divulgado"], "sent": "Nada. O envio foi interrompido antes de chegar à ferramenta.", "mood": "alerta", "headline": "Essa informação não pode ir para a IA Pública B", "message": "Encontrei <b>resultado financeiro não divulgado</b>. 'IA Pública B' não tem contrato corporativo nem logs: conteúdo crítico não pode sair do ambiente controlado. Nada foi enviado — a proteção agiu antes da conexão. Não é uma punição: é a vacina funcionando.", "steps": ["Use <b>Assistente Corporativo A</b> — mesma tarefa, ambiente protegido", "Ou anonimize o conteúdo com a sugestão abaixo", "Se precisar de exceção, peça ao gestor"], "notify": ["Colaborador", "Gestor: Gestor(a) de Financeiro", "Compliance / RI"]}, {"title": "Dez propostas de uma vez", "area": "Comercial", "cargo": "Gerente comercial", "tool": "Assistente Corporativo A", "purpose": "Revisar texto", "qty": 10, "text": "Lote com 10 arquivos de propostas comerciais confidenciais para revisão em massa.", "label": "Aguardando o OK do gestor", "tone": "warn", "found": ["Proposta comercial"], "sent": "Nada por enquanto. O pedido fica guardado até a decisão.", "mood": "atencao", "headline": "Isso precisa do OK de Gestor(a) de Comercial", "message": "Encontrei <b>proposta comercial</b>. 10 itens confidenciais de uma vez exigem autorização de Gestor(a) de Comercial. Enviei o pedido de aprovação; você recebe a resposta aqui.", "steps": ["Reduza o volume ou envie só os trechos necessários", "Explique a finalidade na justificativa", "Enquanto isso, trabalhe com um exemplo fictício"], "notify": ["Colaborador", "Gestor: Gestor(a) de Comercial"]}, {"title": "Resposta a um cliente", "area": "Atendimento", "cargo": "Analista de atendimento", "tool": "Copiloto de Produtividade", "purpose": "Responder cliente", "qty": 1, "text": "Responda ao cliente João Pereira (joao.p@email.com, (11) 98765-4321) pedindo desculpas pelo atraso no PIX de ontem.", "label": "Liberado sem dados pessoais", "tone": "mask", "found": ["Dados cadastrais de cliente"], "sent": "Responda ao cliente [NOME] ([E-MAIL], [TELEFONE]) pedindo desculpas pelo atraso no PIX de ontem.", "mood": "mascara", "headline": "Pode seguir — removi os dados pessoais", "message": "A ferramenta é aprovada, mas a tarefa não precisa de <b>dados cadastrais de cliente</b>. Só a versão mascarada vai para a IA; depois você recoloca os dados no texto final.", "steps": ["Confira se a versão mascarada ainda atende ao pedido", "Recoloque os dados reais fora da IA"], "notify": ["Colaborador"]}, {"title": "Ata de reunião", "area": "Operações", "cargo": "Analista de operações", "tool": "Copiloto de Produtividade", "purpose": "Resumir documento", "qty": 1, "text": "Resuma a ata de reunião interna sobre o novo fluxo de conciliação: decisões, pendências e responsáveis.", "label": "Liberado", "tone": "ok", "found": ["Ata de reunião interna"], "sent": "Resuma a ata de reunião interna sobre o novo fluxo de conciliação: decisões, pendências e responsáveis.", "mood": "aprovado", "headline": "Tudo certo, pode seguir!", "message": "Uso compatível com a política. Dica: dê contexto, formato e critério de qualidade — veja os modelos no Guia.", "steps": [], "notify": ["Colaborador"]}, {"title": "Ferramenta fora do catálogo", "area": "Operações", "cargo": "Analista de operações", "tool": "Ferramenta desconhecida", "purpose": "Classificar conteúdo", "qty": 1, "text": "Classifique estes chamados internos por prioridade.", "label": "Retido para análise", "tone": "warn", "found": [], "sent": "Nada por enquanto. O pedido fica guardado até a decisão.", "mood": "atencao", "headline": "Preciso de uma segunda opinião humana", "message": "Ferramenta fora do catálogo: sem logs nem contrato, a decisão fica com a governança. Seu pedido ficou retido e a governança foi acionada.", "steps": ["Prefira Assistente Corporativo A, que já está no catálogo", "Informe a finalidade com clareza", "Peça a inclusão da ferramenta no catálogo, se ela for útil para o time"], "notify": ["Colaborador"]}], "areas": {"Financeiro": [{"tarefa": "Comentário de variação orçamentária", "ferramenta": "Plataforma de Dados IA", "prompt": "Você é analista de FP&A. Com base na tabela anexa (valores em % de variação, sem nomes de clientes), explique as 3 maiores variações orçado × realizado, possíveis causas e perguntas para os donos dos centros de custo. Formato: tabela + 5 bullets executivos.", "nunca": "Resultado ainda não divulgado ao mercado; dados de clientes individuais.", "ganho": "Rascunho do comentário mensal pronto para revisão."}, {"tarefa": "Resumo de política ou norma", "ferramenta": "Assistente Corporativo A", "prompt": "Resuma a norma anexa em linguagem simples para o time. Liste: o que muda, quem é afetado, prazos e 3 perguntas frequentes com respostas.", "nunca": "Planilhas com dados de clientes junto com o documento.", "ganho": "Leitura de normas longas em minutos."}, {"tarefa": "E-mail de cobrança de documentos", "ferramenta": "Copiloto de Produtividade", "prompt": "Escreva um e-mail cordial para [ÁREA] solicitando os comprovantes pendentes do fechamento de [MÊS], com prazo [DATA] e lista em bullets. Tom: objetivo e colaborativo.", "nunca": "Valores de remuneração ou dados bancários.", "ganho": "Comunicações padronizadas sem retrabalho."}], "Pessoas": [{"tarefa": "Descrição de vaga", "ferramenta": "Copiloto de Produtividade", "prompt": "Crie uma descrição de vaga para [CARGO] na área de [ÁREA]: missão, responsabilidades, requisitos obrigatórios e desejáveis, linguagem inclusiva e sem jargões.", "nunca": "Currículos de candidatos e faixas salariais individuais.", "ganho": "Vaga publicada mais rápido e com linguagem consistente."}, {"tarefa": "Roteiro de onboarding", "ferramenta": "Assistente Corporativo A", "prompt": "Monte um roteiro de onboarding de 2 semanas para [CARGO]: objetivos por dia, materiais, quem apresenta e checkpoints. Formato: tabela.", "nunca": "Nome, CPF ou avaliação de desempenho da pessoa contratada.", "ganho": "Primeiro dia organizado para todo novo colaborador."}, {"tarefa": "Estruturar feedback", "ferramenta": "Assistente Corporativo A", "prompt": "Reescreva este feedback no modelo Situação-Comportamento-Impacto, tom respeitoso e acionável: [descreva a situação sem o nome da pessoa].", "nunca": "Nome da pessoa, notas de avaliação, dados de saúde.", "ganho": "Conversas difíceis mais claras e justas."}], "Jurídico": [{"tarefa": "Resumo de contrato", "ferramenta": "Assistente Jurídico", "prompt": "Resuma o contrato anexo: partes, objeto, prazo, multas, rescisão, obrigações da Stark e cláusulas fora do padrão. Sinalize riscos em vermelho/amarelo/verde.", "nunca": "Usar IA pública para qualquer contrato — o Assistente Jurídico roda em ambiente segregado.", "ganho": "Triagem de contratos em minutos, não horas."}, {"tarefa": "Comparar versões de minuta", "ferramenta": "Assistente Jurídico", "prompt": "Compare a versão A e a versão B da minuta e liste todas as alterações materiais, com impacto para a Stark.", "nunca": "Pareceres de outros casos sem relação com a tarefa.", "ganho": "Revisão de redlines mais segura."}, {"tarefa": "Pesquisa de tema regulatório", "ferramenta": "Assistente Corporativo A", "prompt": "Liste os principais pontos da regulamentação pública sobre [TEMA] e as perguntas que devemos responder internamente.", "nunca": "Fatos de processos em andamento.", "ganho": "Ponto de partida estruturado para o parecer."}], "Comercial": [{"tarefa": "Estrutura de proposta", "ferramenta": "Assistente Corporativo A", "prompt": "Crie a estrutura de uma proposta para um cliente do segmento [SEGMENTO] interessado em [PRODUTO]: contexto, dor, solução, benefícios, próximos passos. Use [CLIENTE] como marcador.", "nunca": "Nome real do cliente, descontos e condições — inclua depois, fora da IA.", "ganho": "Propostas novas a partir de um esqueleto pronto."}, {"tarefa": "Preparação de reunião", "ferramenta": "Copiloto de Produtividade", "prompt": "Prepare uma pauta de 30 min para reunião de descoberta com um cliente de [SEGMENTO]: objetivos, 10 perguntas abertas e possíveis objeções com respostas.", "nunca": "Pipeline de vendas e dados de outros clientes.", "ganho": "Reuniões mais produtivas."}, {"tarefa": "Follow-up pós-reunião", "ferramenta": "Copiloto de Produtividade", "prompt": "Com base nestas anotações [sem dados pessoais], escreva um e-mail de follow-up com resumo, próximos passos, responsáveis e datas.", "nunca": "Contatos pessoais do cliente.", "ganho": "Follow-up enviado no mesmo dia."}], "Atendimento": [{"tarefa": "Resposta empática padrão", "ferramenta": "Copiloto de Produtividade", "prompt": "Escreva uma resposta para um cliente que relata [PROBLEMA], com empatia, explicação simples, prazo e próximo passo. Use [CLIENTE] no lugar do nome.", "nunca": "CPF, saldo, extrato, dados cadastrais.", "ganho": "Respostas consistentes e mais rápidas."}, {"tarefa": "Classificar tickets", "ferramenta": "Assistente Corporativo A", "prompt": "Classifique os tickets anonimizados abaixo por tema, urgência e área responsável. Formato: tabela.", "nunca": "Tickets sem anonimização.", "ganho": "Fila organizada no início do turno."}, {"tarefa": "Base de conhecimento", "ferramenta": "Assistente Corporativo A", "prompt": "Transforme este procedimento interno em um artigo de ajuda para clientes: passo a passo, linguagem simples, perguntas frequentes.", "nunca": "Dados de clientes usados como exemplo.", "ganho": "Menos tickets repetidos."}], "Operações": [{"tarefa": "Documentar processo (POP)", "ferramenta": "Assistente Corporativo A", "prompt": "Transforme estas anotações em um procedimento operacional: objetivo, papéis, passo a passo numerado, controles e exceções.", "nunca": "Dados de clientes ou transações reais.", "ganho": "Processos documentados e auditáveis."}, {"tarefa": "Análise de indicadores operacionais", "ferramenta": "Plataforma de Dados IA", "prompt": "Analise a série de volumes agregados por dia e identifique tendências, picos e possíveis causas. Sugira 3 ações.", "nunca": "Base com identificação individual.", "ganho": "Leitura rápida dos números da semana."}, {"tarefa": "Ata de reunião", "ferramenta": "Copiloto de Produtividade", "prompt": "Resuma estas anotações em ata: decisões, pendências com responsável e prazo, riscos.", "nunca": "Credenciais ou dados de clientes citados na reunião.", "ganho": "Ata pronta ao sair da reunião."}], "Risco & Compliance": [{"tarefa": "Checklist de controle", "ferramenta": "Assistente Corporativo A", "prompt": "Crie um checklist de verificação para o processo [PROCESSO] com base nesta política interna: item, evidência esperada, frequência, responsável.", "nunca": "Achados de investigação com nomes.", "ganho": "Testes de controle padronizados."}, {"tarefa": "Mapear riscos de um processo", "ferramenta": "Assistente Corporativo A", "prompt": "Liste os riscos operacionais, de fraude e de privacidade do processo descrito, com probabilidade, impacto e controle sugerido.", "nunca": "Casos reais em investigação.", "ganho": "Matriz de risco inicial em minutos."}, {"tarefa": "Resumo regulatório", "ferramenta": "Assistente Jurídico", "prompt": "Resuma a norma pública anexa: o que muda, prazos, impactos para a Stark e plano de adequação sugerido.", "nunca": "Pareceres internos sigilosos sem relação com a tarefa.", "ganho": "Adequação regulatória mais ágil."}], "Marketing": [{"tarefa": "Variações de texto de campanha", "ferramenta": "Copiloto de Produtividade", "prompt": "Crie 5 variações de título e subtítulo para a campanha pública [CAMPANHA], público [PÚBLICO], tom [TOM].", "nunca": "Estratégia de lançamento ainda não anunciada (use o Assistente Corporativo A).", "ganho": "Mais opções para testar em menos tempo."}, {"tarefa": "Peça visual de campanha publicada", "ferramenta": "Gerador de Imagens", "prompt": "Gere uma imagem para a campanha já publicada [CAMPANHA], estilo [ESTILO], sem logos de terceiros.", "nunca": "Qualquer material confidencial — o gerador é aprovado só para conteúdo público.", "ganho": "Peças de apoio sem depender de fila de design."}, {"tarefa": "Plano de conteúdo", "ferramenta": "Assistente Corporativo A", "prompt": "Monte um calendário editorial de 4 semanas para [TEMA], com formato, canal, objetivo e métrica de cada peça.", "nunca": "Dados de clientes de campanhas anteriores.", "ganho": "Planejamento mensal estruturado."}]}, "avatars": {"ola": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Olá!\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#C19A4F\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <path d=\"M47 64 q8 -9 16 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M77 64 q8 -9 16 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M56 84 q14 13 28 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  \n</svg>", "alerta": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Bloqueio preventivo\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#A8434B\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <path d=\"M45 50 l18 5\" stroke=\"#D8B573\" stroke-width=\"3.5\" stroke-linecap=\"round\"/><path d=\"M95 50 l-18 5\" stroke=\"#D8B573\" stroke-width=\"3.5\" stroke-linecap=\"round\"/><rect x=\"47\" y=\"60\" width=\"16\" height=\"5\" rx=\"2.5\" fill=\"#F5E6C4\"/><rect x=\"77\" y=\"60\" width=\"16\" height=\"5\" rx=\"2.5\" fill=\"#F5E6C4\"/><path d=\"M58 88 h24\" stroke=\"#F5E6C4\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  <path d=\"M112 98 l12 4.5v8c0 6.5-4.5 11-12 13.5c-7.5-2.5-12-7-12-13.5v-8z\" fill=\"#A8434B\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M107 108 l10 8 M117 108 l-10 8\" stroke=\"#fff\" stroke-width=\"2.4\" stroke-linecap=\"round\"/>\n</svg>", "atencao": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Atenção\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#C19A4F\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <path d=\"M77 47 q8 -6 16 0\" stroke=\"#D8B573\" stroke-width=\"3.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"55\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><circle cx=\"85\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><path d=\"M60 89 q10 -5 20 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  <circle cx=\"113\" cy=\"110\" r=\"12\" fill=\"#C19A4F\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M113 103 v8\" stroke=\"#1B2B4C\" stroke-width=\"3\" stroke-linecap=\"round\"/><circle cx=\"113\" cy=\"116\" r=\"1.8\" fill=\"#1B2B4C\"/>\n</svg>", "mascara": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Dados protegidos\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#4B5E8E\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <circle cx=\"55\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><circle cx=\"85\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><rect x=\"40\" y=\"78\" width=\"60\" height=\"20\" rx=\"8\" fill=\"#4B5E8E\"/><path d=\"M44 84 h52 M44 90 h52\" stroke=\"#A5B6EA\" stroke-width=\"1.5\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  <circle cx=\"113\" cy=\"110\" r=\"12\" fill=\"#4B5E8E\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M106 110 h14\" stroke=\"#fff\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n</svg>", "aprovado": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Tudo certo\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#2F7D5B\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <path d=\"M47 64 q8 -9 16 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M77 64 q8 -9 16 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M56 84 q14 13 28 0\" stroke=\"#F5E6C4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  <circle cx=\"113\" cy=\"110\" r=\"12\" fill=\"#2F7D5B\" stroke=\"#fff\" stroke-width=\"2\"/><path d=\"M107 110 l4.5 4.5 l8 -9\" stroke=\"#fff\" stroke-width=\"2.6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n</svg>", "pensando": "<svg class=\"iris-avatar\" width=\"88\" height=\"88\" viewBox=\"0 0 140 140\" role=\"img\" aria-label=\"Íris — Observando\">\n  <circle cx=\"70\" cy=\"70\" r=\"66\" fill=\"none\" stroke=\"#5C6A84\" stroke-width=\"5\" opacity=\".9\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"59\" fill=\"#1B2B4C\"/>\n  <path d=\"M70 14 l3 7 l-3 4 l-3 -4z\" fill=\"#D8B573\"/>\n  <rect x=\"34\" y=\"40\" width=\"72\" height=\"66\" rx=\"28\" fill=\"#24375E\"/>\n  <rect x=\"38\" y=\"48\" width=\"64\" height=\"26\" rx=\"13\" fill=\"#14203B\"/>\n  <circle cx=\"55\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><circle cx=\"85\" cy=\"62\" r=\"6\" fill=\"#F5E6C4\"><animate attributeName=\"r\" values=\"6;6;0.8;6\" keyTimes=\"0;0.92;0.96;1\" dur=\"4s\" repeatCount=\"indefinite\"/></circle><circle cx=\"62\" cy=\"88\" r=\"2.6\" fill=\"#F5E6C4\"/><circle cx=\"70\" cy=\"88\" r=\"2.6\" fill=\"#F5E6C4\"/><circle cx=\"78\" cy=\"88\" r=\"2.6\" fill=\"#F5E6C4\"/>\n  <circle cx=\"34\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/><circle cx=\"106\" cy=\"73\" r=\"5\" fill=\"#D8B573\"/>\n  \n</svg>"}};
+const N = DATA.n;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = (a, b) => Math.round(a / b * 100);
+
+/* abertura */
+$("figs").innerHTML = [
+  [`${N.bloq} de ${N.crit}`, "situações críticas da base teriam sido barradas antes de sair"],
+  [`${pct(N.livres, N.total)}%`, "dos usos seguiriam sem nenhuma interrupção"],
+  [`${N.exposicoes}`, `exposições nos ${N.testes} testes, inclusive os feitos para enganar o sistema`],
+].map(([v, l]) => `<div class="fig"><span class="v num">${v}</span><span class="l">${l}</span></div>`).join("");
+
+/* problema */
+const oneIn = Math.round(N.eventos / N.criticos);
+$("facts").innerHTML = [
+  [N.eventos, "", `<b>usos de IA</b> registrados em pouco mais de 3 meses, por ${N.usuarios} pessoas de ${N.areas} áreas.`],
+  [N.alertas, "", `<b>alertas de risco alto ou crítico</b>: ${pct(N.alertas, N.eventos)}% de todos os usos.`],
+  [N.pendentes, "crit", `<b>alertas ainda sem tratamento</b>. Quando chegam, o dado já foi enviado.`],
+  [`1 em ${oneIn}`, "crit", `<b>usos é crítico</b>. A meta da Stark é menos de 1 em 100.`],
+].map(([v, c, t]) => `<li><span class="v num ${c}">${v}</span><p>${t}</p></li>`).join("");
+const leakTotal = N.leak.reduce((a, x) => a + x.n, 0), leakMax = Math.max(...N.leak.map(x => x.n));
+$("leak-sub").textContent = `Tipo de informação nos ${leakTotal} alertas de risco alto ou crítico.`;
+$("leak").innerHTML = N.leak.map(x => `<div class="bar"><div class="t"><span>${esc(x.label)}</span><span>${x.n} · ${pct(x.n, leakTotal)}%</span></div>
+  <div class="tr"><div class="fl" style="width:${x.n / leakMax * 100}%"></div></div></div>`).join("");
+
+/* demonstração */
+const picker = $("picker"), stage = $("stage");
+DATA.scenarios.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.className = "pick"; b.id = "sc-" + i; b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+  b.innerHTML = `<span>${esc(s.title)}</span><small>${esc(s.area)} · ${esc(s.tool)}</small>`;
+  b.addEventListener("click", () => show(i));
+  picker.appendChild(b);
+});
+function show(i) {
+  const s = DATA.scenarios[i];
+  picker.querySelectorAll(".pick").forEach((b, j) => b.setAttribute("aria-pressed", j === i ? "true" : "false"));
+  const qty = s.qty > 1 ? `<span><b>${s.qty}</b> arquivos</span>` : "";
+  stage.innerHTML = `
+    <div class="req">
+      <div class="who"><span><b>${esc(s.cargo)}</b> · ${esc(s.area)}</span><span>Ferramenta: <b>${esc(s.tool)}</b></span><span>Para: <b>${esc(s.purpose.toLowerCase())}</b></span>${qty}</div>
+      <div class="quote">${esc(s.text)}</div>
+    </div>
+    <div class="verdict"><span class="pill t-${s.tone}">${esc(s.label)}</span>
+      <span class="found">${s.found.length ? "Encontrado: " + s.found.map(esc).join(", ").toLowerCase() : "Nenhuma informação sensível encontrada"}</span></div>
+    <div class="iris">${DATA.avatars[s.mood] || DATA.avatars.ola}
+      <div class="bubble"><span class="eyebrow">Íris explica</span><h3>${esc(s.headline)}</h3><p>${s.message}</p>
+      ${s.steps.length ? "<ol>" + s.steps.map(x => `<li>${x}</li>`).join("") + "</ol>" : ""}</div></div>
+    <div class="sent"><span class="lab">O que chegou à ferramenta de IA</span><pre>${esc(s.sent)}</pre></div>
+    <div class="notify">Avisados: ${s.notify.map(esc).join(" · ")}</div>`;
+  stage.classList.remove("swap"); void stage.offsetWidth; stage.classList.add("swap");
+}
+show(0);
+
+/* íris por área */
+const areaNames = Object.keys(DATA.areas), tabs = $("area-tabs");
+areaNames.forEach((a, i) => {
+  const t = document.createElement("button");
+  t.className = "tab"; t.id = "area-" + i; t.setAttribute("role", "tab"); t.textContent = a;
+  t.addEventListener("click", () => area(i));
+  tabs.appendChild(t);
+});
+function area(i) {
+  tabs.querySelectorAll(".tab").forEach((t, j) => t.setAttribute("aria-selected", j === i ? "true" : "false"));
+  $("uses").innerHTML = DATA.areas[areaNames[i]].map(u => `
+    <article class="use">
+      <div class="meta"><h3>${esc(u.tarefa)}</h3><span class="tool">${esc(u.ferramenta)}</span><p>${esc(u.ganho)}</p></div>
+      <div><div class="prompt">${esc(u.prompt)}</div><p class="never"><b>Nunca inclua</b>${esc(u.nunca)}</p></div>
+    </article>`).join("");
+}
+area(0);
+
+/* resultado */
+$("replay").innerHTML = [
+  [`${N.bloq} de ${N.crit}`, "ok", "Bloqueados antes do envio", "Todos os usos críticos: senhas e informação restrita em IA pública."],
+  [`${N.altos_ret} de ${N.altos}`, "ok", "Retidos ou protegidos", "Usos de risco alto: pedido de aprovação, remoção de dados pessoais ou análise."],
+  [`${N.livres}`, "gold", "Liberados sem atrito", `${pct(N.livres, N.total)}% de todos os usos: conteúdo público, interno ou confidencial na ferramenta certa.`],
+].map(([v, c, t, d]) => `<tr><td class="big num ${c}">${v}</td><td><b>${t}</b><small>${d}</small></td></tr>`).join("");
+
+(function trend() {
+  const svg = $("trend"), m = N.monthly, W = 560, H = 250, L = 44, R = 20, T = 28, B = 34;
+  const yMax = 0.16, x = i => L + (W - L - R) * (i / (m.length - 1)), y = v => T + (H - T - B) * (1 - v / yMax);
+  let g = "";
+  [0, 0.05, 0.10, 0.15].forEach(v => {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+  });
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(0.01)}" y2="${y(0.01)}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g += `<text class="meta" x="${W - R}" y="${y(0.01) - 7}" text-anchor="end">meta: menos de 1%</text>`;
+  const pts = m.map((d, i) => `${x(i)},${y(d.v)}`).join(" ");
+  g += `<polygon points="${L},${y(0)} ${pts} ${x(m.length - 1)},${y(0)}" fill="var(--gold)" opacity=".12"/>`;
+  g += `<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>`;
+  m.forEach((d, i) => {
+    g += `<circle cx="${x(i)}" cy="${y(d.v)}" r="5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>`;
+    g += `<text class="lab" x="${x(i)}" y="${y(d.v) - 12}" text-anchor="middle">${(d.v * 100).toFixed(1).replace(".", ",")}%</text>`;
+    g += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${d.m}</text>`;
+  });
+  svg.innerHTML = g;
+})();
+
+/* confiança */
+$("proofs").innerHTML = [
+  `<b>${N.testes_ok} de ${N.testes}</b> situações de teste com a decisão certa, inclusive senhas escondidas, CPF sem rótulo e textos em inglês.`,
+  `<b>Tudo fica registrado</b>: quem, quando, qual ferramenta e qual decisão. O texto do pedido não é guardado, só uma “impressão digital” que prova o que foi enviado.`,
+  `<b>A própria Íris não recebe dado sensível</b>: o que a pessoa escreve para ela passa pelo mesmo filtro.`,
+  `<b>Privacidade por padrão</b>: a liderança vê números por área. Nomes só aparecem para a Segurança, e esse acesso também é registrado.`,
+].map(t => `<li>${t}</li>`).join("");
+</script>

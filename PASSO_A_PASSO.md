@@ -195,6 +195,18 @@ Controles no topo: **Modo** Proteção/Monitor e **Perfil** Liderança (só agre
   - novo gráfico "% alto/crítico por área"; botão "Deploy" do Streamlit escondido (`toolbarMode = "viewer"`).
 - README reescrito para jurados: problema, solução, diagrama, demonstração com prints, evidências, como rodar.
 
+## Etapa 10 — Página de apresentação para negócio (`apresentacao/`)
+
+- `apresentacao/stark-ai-gateway.html`: página única que abre no navegador, sem Python nem internet
+  (só as fontes vêm do Google Fonts; sem internet, cai para fontes do sistema).
+- Linguagem de negócio, sem códigos de regra nem termos técnicos. Seções: problema, como funciona (3 passos),
+  **demonstração clicável com 7 situações**, Íris por área (8 áreas × 3 usos), resultado com os dados reais,
+  por que confiar, plano 30/60/90 e **proposta de piloto de 30 dias com Financeiro e Pessoas**.
+- Números, decisões e mensagens da Íris vêm do próprio backend: `python apresentacao/build.py` regera o HTML
+  a partir de `apresentacao/template.html`, então a página nunca diverge do protótipo.
+- Tema claro e escuro; layout testado em desktop e celular (400 px), sem erros no console.
+- Correção no build: o cenário de reenvio mostrava a ferramenta antiga; agora mostra a ferramenta segura usada.
+
 ## Como apresentar (roteiro sugerido, ~4 min)
 
 1. **Gateway → "Pessoas · folha na IA pública"** → Analisar: bloqueio + Íris explica.
